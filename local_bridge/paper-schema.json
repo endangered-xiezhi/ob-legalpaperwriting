@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 2,
+  "recordStates": ["intake", "agent_draft", "verified", "excluded"],
+  "fields": {
+    "record_id": { "label": "稳定记录ID", "type": "string", "requiredAt": "stub" },
+    "title": { "label": "题名", "type": "string", "requiredAt": "stub" },
+    "author": { "label": "作者", "type": "string[]", "requiredAt": "screening" },
+    "journal": { "label": "刊物", "type": "string", "requiredAt": "screening" },
+    "year": { "label": "年份", "type": "year", "requiredAt": "screening" },
+    "abstract": { "label": "摘要", "type": "text", "requiredAt": "screening" },
+    "volume": { "label": "卷号", "type": "string", "requiredAt": "metadata" },
+    "issue": { "label": "期号", "type": "string", "requiredAt": "citation" },
+    "page_range": { "label": "起止页", "type": "string", "requiredAt": "citation" },
+    "doi": { "label": "DOI", "type": "string", "requiredAt": "optional" },
+    "cnki_id": { "label": "知网ID", "type": "string", "requiredAt": "identity" },
+    "source_pdf": { "label": "PDF路径", "type": "path", "requiredAt": "analysis" },
+    "source_txt": { "label": "分页TXT路径", "type": "path", "requiredAt": "analysis" },
+    "page_index_path": { "label": "页码索引", "type": "path", "requiredAt": "evidence" },
+    "primary_domain": { "label": "主要领域", "type": "enum", "requiredAt": "verified" }
+  },
+  "citationRequired": ["title", "author", "journal", "year", "issue", "pinpoint_page"]
+}
