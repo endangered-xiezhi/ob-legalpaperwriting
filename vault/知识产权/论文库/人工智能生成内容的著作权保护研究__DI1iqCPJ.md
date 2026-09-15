@@ -29,6 +29,7 @@ author_affiliation:
 primary_domain: ""
 source_url: "https://kns.cnki.net/kcms2/article/abstract?v=0VvkOTFCJRrSPDYkWDVSc8baEE093nOhw7EoxCb-nTNMaUtdfgLDRVDNGC4r9hfS00bhVVfPIBzN1XGsGEK8koniVEcthcd6bIj_Dm3FrvDXWMKAx8b2at6rbdG1cooTUA_c_5ab8BZTQc5YubCqk75IHMsKK_zAdqijSEiydIlQ0B7W77Kjhw==&uniplatform=NZKPT&language=CHS"
 source_pdf: "data/人工智能生成内容的著作权保护研究__DI1iqCPJ.pdf"
+pdf_link: "[[人工智能生成内容的著作权保护研究__DI1iqCPJ.pdf]]"
 source_txt: "txt/人工智能生成内容的著作权保护研究__DI1iqCPJ.txt"
 page_index_path: "page_index/人工智能生成内容的著作权保护研究__DI1iqCPJ.json"
 cnki_citation_count: "135"
@@ -44,6 +45,11 @@ warning: ""
 <!-- LEXTRACE:GENERATED-STUB -->
 
 # 人工智能生成内容的著作权保护研究
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[人工智能生成内容的著作权保护研究__DI1iqCPJ.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 > [!warning] 新采集样板
 > 本页由知网采集器创建，尚未正式纳入论文库。元数据、观点、关系和引注均须人工审核。

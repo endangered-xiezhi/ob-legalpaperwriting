@@ -8,6 +8,7 @@ collection:
   - "人工智能-著作权"
 primary_domain: "著作权法"
 source_pdf: "data/著作权法如何应对Web30挑战以视听内容为样本.pdf"
+pdf_link: "[[著作权法如何应对Web30挑战以视听内容为样本.pdf]]"
 source_txt: "txt/著作权法如何应对Web30挑战以视听内容为样本.txt"
 review_status: "fulltext_verified"
 original_keywords:
@@ -20,6 +21,11 @@ original_keywords:
 ---
 
 # 著作权法如何应对Web3.0挑战：以视听内容为样本
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[著作权法如何应对Web30挑战以视听内容为样本.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一句话主旨
 本文以视听内容为样本，探讨了Web3.0和生成式人工智能对著作权法带来的挑战，主张通过合理使用客观化、集体管理自治性调整和过滤义务的转化来实现技术治理与法律治理的全面融合。

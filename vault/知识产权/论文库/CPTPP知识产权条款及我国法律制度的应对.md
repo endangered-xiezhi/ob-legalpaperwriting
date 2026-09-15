@@ -8,6 +8,7 @@ collection:
   - "人工智能-著作权"
 primary_domain: "著作权法"
 source_pdf: "data/CPTPP知识产权条款及我国法律制度的应对.pdf"
+pdf_link: "[[CPTPP知识产权条款及我国法律制度的应对.pdf]]"
 source_txt: "txt/CPTPP知识产权条款及我国法律制度的应对.txt"
 review_status: "fulltext_verified"
 original_keywords:

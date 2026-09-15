@@ -8,6 +8,7 @@ collection:
   - "人工智能-著作权"
 primary_domain: "著作权法"
 source_pdf: "data/符号互动论视域下AIGC可版权性的制度建构.pdf"
+pdf_link: "[[符号互动论视域下AIGC可版权性的制度建构.pdf]]"
 source_txt: "txt/符号互动论视域下AIGC可版权性的制度建构.txt"
 review_status: "fulltext_verified"
 original_keywords:
@@ -19,6 +20,11 @@ original_keywords:
 ---
 
 # 符号互动论视域下AIGC可版权性的制度建构
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[符号互动论视域下AIGC可版权性的制度建构.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一句话主旨
 本文引入社会学中的“符号互动论”视角，突破了传统著作权法对AI创作的静态分析，提出AIGC的可版权性是人类（主我）与AI技术规范（客我）动态互动并最终达成社会共识的结果。

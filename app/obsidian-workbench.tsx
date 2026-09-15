@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
 const BRIDGE = "http://127.0.0.1:8765";
 
@@ -42,6 +42,8 @@ type NoteRecord = {
   pageRange: string;
   doi: string;
   cnkiId: string;
+  sourcePdf?: string;
+  pdfLink?: string;
 };
 
 type NoteDetail = NoteRecord & { backlinks: Array<{ path: string; title: string }>; localPath: string };
@@ -99,6 +101,14 @@ function noteMatches(note: NoteRecord, query: string) {
   return words.every((word) => haystack.includes(word));
 }
 
+function buildSimpleCitation(note: NoteRecord) {
+  const authors = note.authors.join("、") || "作者待核";
+  const journal = note.journal || "刊物待核";
+  const year = note.year || "年份待核";
+  const issue = note.issue ? `第${note.issue}期` : "";
+  return `${authors}：《${note.title}》，载《${journal}》${year}年${issue}。`;
+}
+
 export default function ObsidianWorkbench() {
   const [view, setView] = useState<View>("overview");
   const [navigation, setNavigation] = useState<NavigationData | null>(null);
@@ -120,9 +130,32 @@ export default function ObsidianWorkbench() {
   const [yearRange, setYearRange] = useState("");
   const [screeningReasons, setScreeningReasons] = useState<Record<string, string>>({});
   const [citationPath, setCitationPath] = useState("");
-  const [citationMode, setCitationMode] = useState<"direct" | "paraphrase" | "general">("paraphrase");
+  const [citationMode, setCitationMode] = useState<"direct" | "paraphrase" | "general" | "short">("paraphrase");
   const [pinpointPage, setPinpointPage] = useState("");
-  const [citationResult, setCitationResult] = useState<{ citation: string; obsidianMarker: string; obsidianDefinition: string; verification: string } | null>(null);
+  const [citationResult, setCitationResult] = useState<{
+    citation: string;
+    shortCitation?: string;
+    wordFootnote?: string;
+    obsidianMarker: string;
+    obsidianDefinition: string;
+    markdownFootnote?: string;
+    verification: string;
+  } | null>(null);
+  const [citationSearchQuery, setCitationSearchQuery] = useState("");
+
+  const [quickCitationNote, setQuickCitationNote] = useState<NoteRecord | null>(null);
+  const [quickPinpoint, setQuickPinpoint] = useState("");
+  const [quickMode, setQuickMode] = useState<"paraphrase" | "direct" | "general" | "short">("paraphrase");
+  const [quickResult, setQuickResult] = useState<{
+    citation: string;
+    shortCitation?: string;
+    wordFootnote?: string;
+    obsidianMarker?: string;
+    obsidianDefinition?: string;
+    markdownFootnote?: string;
+    verification?: string;
+  } | null>(null);
+  const [quickError, setQuickError] = useState("");
   const versionRef = useRef("");
 
   const loadNavigation = useCallback(async (silent = false) => {
@@ -337,9 +370,56 @@ export default function ObsidianWorkbench() {
     setNotice("可复核研究包已导出到浏览器下载目录。");
   }
 
+  async function openQuickCitation(note: NoteRecord) {
+    setQuickCitationNote(note);
+    setQuickPinpoint("");
+    setQuickMode("paraphrase");
+    setQuickError("");
+    try {
+      const response = await fetch(`${BRIDGE}/api/citations/render`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: note.path, mode: "general", pinpointPage: "" }),
+      });
+      const data = await response.json();
+      if (response.ok && data.ok) {
+        setQuickResult(data);
+      } else {
+        setQuickResult(null);
+        setQuickError(data.error || "字段不完整");
+      }
+    } catch {
+      setQuickResult(null);
+    }
+  }
+
+  async function updateQuickCitation(note: NoteRecord, mode: "paraphrase" | "direct" | "general" | "short", pinpoint: string) {
+    setQuickMode(mode);
+    setQuickPinpoint(pinpoint);
+    try {
+      const response = await fetch(`${BRIDGE}/api/citations/render`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: note.path, mode, pinpointPage: pinpoint }),
+      });
+      const data = await response.json();
+      if (response.ok && data.ok) {
+        setQuickResult(data);
+        setQuickError("");
+      } else {
+        setQuickError(data.error || "引注生成失败");
+      }
+    } catch {
+      setQuickError("无法连接到本地服务");
+    }
+  }
+
   function noteActions(note: NoteRecord) {
     return (
       <span className="row-actions">
+        {note.isPaper && (
+          <button type="button" className="cite-action-btn" title="一键生成法学引注" onClick={() => void openQuickCitation(note)}>引注</button>
+        )}
         <button type="button" className={contextPaths.includes(note.path) ? "selected" : ""} onClick={() => toggleContext(note.path)}>{contextPaths.includes(note.path) ? "已加入" : "+ Agent"}</button>
         <button type="button" onClick={() => void openInObsidian(note.path)}>OB ↗</button>
       </span>
@@ -500,22 +580,34 @@ export default function ObsidianWorkbench() {
   }
 
   function renderCitations() {
-    const papers = (navigation?.searchNotes ?? []).filter((note) => note.isPaper && !note.isExcluded);
-    const active = papers.find((note) => note.path === citationPath);
+    const allPapers = (navigation?.searchNotes ?? []).filter((note) => note.isPaper && !note.isExcluded);
+    const papers = citationSearchQuery.trim()
+      ? allPapers.filter((note) => noteMatches(note, citationSearchQuery))
+      : allPapers;
+    const active = allPapers.find((note) => note.path === citationPath);
     return (
       <section>
         <div className="page-intro"><span className="eyebrow">2019 LEGAL CITATION MANUAL</span><h1>引注中心</h1><p>书目信息来自 Obsidian YAML，具体观点页码由你依据 PDF 核验。系统不会猜测缺失的作者、期号或页码。</p></div>
         <div className="citation-layout">
           <div className="panel-card citation-form">
             <div className="panel-head"><div><span className="eyebrow">SOURCE</span><h3>选择论文与引用方式</h3></div><span>{active?.citationStatus || "等待选择"}</span></div>
-            <label>论文<select value={citationPath} onChange={(event) => { setCitationPath(event.target.value); setCitationResult(null); }}><option value="">请选择论文</option>{papers.map((note) => <option value={note.path} key={note.path}>{note.title}｜{note.authors.join("、") || "作者待补"}</option>)}</select></label>
-            <div className="field-row"><label>用途<select value={citationMode} onChange={(event) => setCitationMode(event.target.value as typeof citationMode)}><option value="paraphrase">转述观点（参见）</option><option value="direct">直接引语</option><option value="general">整篇文献列示</option></select></label><label>具体印刷页码<input value={pinpointPage} onChange={(event) => setPinpointPage(event.target.value)} placeholder={citationMode === "general" ? "可留空" : "例如 163 或 163-165"} /></label></div>
-            {active && <div className="citation-metadata"><span>{active.journal || "刊物待补"}</span><span>{active.year || "年份待补"}年第{active.issue || "?"}期</span><span>{active.pageRange ? `全文 ${active.pageRange} 页` : "起止页待补"}</span></div>}
+            <label className="citation-search-filter">
+              快速筛选论文
+              <input
+                type="text"
+                value={citationSearchQuery}
+                onChange={(event) => setCitationSearchQuery(event.target.value)}
+                placeholder="搜索题名、作者关键词快速过滤..."
+              />
+            </label>
+            <label>论文 ({papers.length} 篇可用)<select value={citationPath} onChange={(event) => { setCitationPath(event.target.value); setCitationResult(null); }}><option value="">请选择论文</option>{papers.map((note) => <option value={note.path} key={note.path}>{note.title}｜{note.authors.join("、") || "作者待补"}</option>)}</select></label>
+            <div className="field-row"><label>用途<select value={citationMode} onChange={(event) => setCitationMode(event.target.value as typeof citationMode)}><option value="paraphrase">转述观点（参见）</option><option value="direct">直接引语</option><option value="general">整篇文献列示</option><option value="short">前引文（再次引用）</option></select></label><label>具体印刷页码<input value={pinpointPage} onChange={(event) => setPinpointPage(event.target.value)} placeholder={citationMode === "general" ? "可留空" : "例如 163 或 163-165"} /></label></div>
+            {active && <div className="citation-metadata"><span>{active.journal || "刊物待补"}</span><span>{active.year || "年份待补"}年{active.issue ? `第${active.issue}期` : ""}</span><span>{active.pageRange ? `全文 ${active.pageRange} 页` : "起止页待补"}</span>{(active.pdfLink || active.sourcePdf) && <span style={{ color: "var(--teal)", fontWeight: 650 }}>📄 PDF 已关联</span>}</div>}
             <button className="primary-button" type="button" onClick={() => void renderCitation()}>生成法学脚注</button>
           </div>
           <div className="panel-card citation-output">
             <div className="panel-head"><div><span className="eyebrow">OUTPUT</span><h3>Obsidian 与 Word</h3></div><span>{citationResult ? "待回看PDF" : "尚未生成"}</span></div>
-            {citationResult ? <><div className="citation-preview"><strong>{citationResult.citation}</strong><small>状态：{citationResult.verification === "pinpoint_unverified" ? "页码由用户输入，仍需回看PDF" : "书目信息已生成"}</small></div><div className="citation-actions"><button type="button" onClick={() => void copyText(citationResult.citation, "Word脚注文本已复制。")}>复制 Word 脚注</button><button type="button" onClick={() => void copyText(`${citationResult.obsidianMarker}\n${citationResult.obsidianDefinition}`, "Obsidian脚注已复制。")}>复制 Obsidian 脚注</button>{active && <button type="button" onClick={() => void openInObsidian(active.path)}>回到原笔记 ↗</button>}</div></> : <div className="context-empty">选择论文并填写具体页码后生成。字段缺失时，系统会明确提示而不会补猜。</div>}
+            {citationResult ? <><div className="citation-preview"><strong>{citationResult.citation}</strong><small>状态：{citationResult.verification === "pinpoint_unverified" ? "页码由用户输入，仍需回看PDF" : "书目信息已生成"}</small></div><div className="citation-actions"><button type="button" onClick={() => void copyText(citationResult.citation, "Word脚注文本已复制。")}>复制 Word 脚注</button><button type="button" onClick={() => void copyText(citationResult.markdownFootnote || `${citationResult.obsidianMarker}\n${citationResult.obsidianDefinition}`, "Obsidian脚注已复制。")}>复制 Obsidian 脚注</button>{citationResult.shortCitation && <button type="button" onClick={() => void copyText(citationResult.shortCitation!, "前引文短注已复制。")}>复制前引文</button>}{active && <button type="button" onClick={() => void openInObsidian(active.path)}>回到原笔记 ↗</button>}</div></> : <div className="context-empty">选择论文并填写具体页码后生成。字段缺失时，系统会明确提示而不会补猜。</div>}
           </div>
         </div>
       </section>
@@ -538,7 +630,123 @@ export default function ObsidianWorkbench() {
   return (
     <main className="obsidian-app"><aside className="sidebar"><div className="brand"><span className="brand-mark">L</span><div><strong>LexTrace</strong><small>Obsidian Research Workbench</small></div></div><div className="vault-chip"><span className={bridgeState === "connected" ? "connection-dot ready" : "connection-dot"} /><div><strong>{navigation?.vaultName || "Obsidian Vault"}</strong><small>{bridgeState === "connected" ? "样板可写 · 目录自动更新" : "请使用一键启动器"}</small></div></div><nav>{NAV_ITEMS.map((item) => <button type="button" className={view === item.id ? "active" : ""} key={item.id} onClick={() => setView(item.id)}><span>{item.glyph}</span><div><strong>{item.label}</strong><small>{item.caption}</small></div></button>)}</nav><div className="sidebar-bottom"><button type="button" onClick={() => void openInObsidian("知识产权/00_知识产权研究导航.md")}><span className="api-dot ready" />原生导航</button><button type="button" onClick={() => void openInObsidian()}>打开 Obsidian ↗</button></div></aside><div className="main-shell"><header className="topbar"><div className="global-search"><span>⌕</span><input aria-label="搜索Obsidian目录" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索题名、学者、年份、领域或争议…" /><kbd>本机</kbd>{searchMatches.length > 0 && <div className="search-popover">{searchMatches.map((note) => <button type="button" key={note.path} onClick={() => { void openNote(note.path); setQuery(""); }}><strong>{note.title}</strong><small>{note.authors.join("、") || note.folder}</small></button>)}</div>}</div><div className="top-actions"><span className="auto-update-label"><i />10秒自动检查</span><button type="button" onClick={() => void loadNavigation()}>↻ 刷新</button><button className="obsidian-button" type="button" onClick={() => void openInObsidian("知识产权/00_知识产权研究导航.md")}>OB&nbsp; 原生导航</button></div></header><div className="content-shell">{bridgeState === "offline" && <div className="connection-warning"><strong>本机工作台尚未启动</strong><span>请双击“启动LexTrace.command”；原生 Obsidian 导航仍可独立使用。</span><button type="button" onClick={() => void loadNavigation()}>重新连接</button></div>}{view === "overview" && renderOverview()}{view === "intake" && renderIntake()}{view === "library" && renderLibrary()}{view === "relations" && renderRelations()}{view === "citations" && renderCitations()}{view === "agents" && renderAgents()}{view === "export" && renderExport()}</div></div>
 
-      {(selectedNote || noteLoading) && <aside className="note-drawer"><div className="drawer-head"><span>{noteLoading ? "正在读取…" : "OBSIDIAN NOTE PREVIEW"}</span><button type="button" onClick={() => setSelectedNote(null)}>×</button></div>{selectedNote && <><div className="drawer-title"><small>{selectedNote.path}</small><h2>{selectedNote.title}</h2><div>{selectedNote.authors.map((author) => <span key={author}>{author}</span>)}{selectedNote.year && <span>{selectedNote.year}</span>}{selectedNote.journal && <span>{selectedNote.journal}</span>}</div></div><div className="drawer-actions"><button className="primary-button" type="button" onClick={() => void openInObsidian(selectedNote.path)}>在 Obsidian 阅读全文</button><button className={contextPaths.includes(selectedNote.path) ? "quiet-button selected" : "quiet-button"} type="button" onClick={() => toggleContext(selectedNote.path)}>{contextPaths.includes(selectedNote.path) ? "已加入 Agent" : "+ Agent 材料"}</button><button className="quiet-button" type="button" onClick={() => void copyText(selectedNote.path, "笔记路径已复制。")}>复制路径</button></div><section className="preview-summary"><span className="eyebrow">SUMMARY</span><p>{selectedNote.summary || "这篇导航笔记没有设置摘要，请在 Obsidian 中查看完整内容。"}</p></section><div className="drawer-columns"><div><span className="eyebrow">OUTLINE</span>{selectedNote.headings.slice(1, 16).map((heading, index) => <span className="outline-item" key={`${heading.text}-${index}`} style={{ paddingLeft: `${Math.max(0, heading.level - 1) * 11}px` }}>{heading.text}</span>)}</div><div><span className="eyebrow">LINKS</span><p>{selectedNote.links.length} 个出链 · {selectedNote.backlinks.length} 个反链</p></div></div><div className="link-preview"><span className="eyebrow">OUTGOING LINKS</span>{selectedNote.links.slice(0, 18).map((link) => link.path ? <button type="button" key={`${link.target}-${link.path}`} onClick={() => void openNote(link.path!)}>→ {link.label}</button> : <span key={link.target}>· {link.label}</span>)}</div><div className="backlinks"><span className="eyebrow">BACKLINKS</span>{selectedNote.backlinks.slice(0, 16).map((note) => <button type="button" key={note.path} onClick={() => void openNote(note.path)}>← {note.title}</button>)}</div></>}</aside>}
+      {(selectedNote || noteLoading) && <aside className="note-drawer"><div className="drawer-head"><span>{noteLoading ? "正在读取…" : "OBSIDIAN NOTE PREVIEW"}</span><button type="button" onClick={() => setSelectedNote(null)}>×</button></div>{selectedNote && <><div className="drawer-title"><small>{selectedNote.path}</small><h2>{selectedNote.title}</h2><div>{selectedNote.authors.map((author) => <span key={author}>{author}</span>)}{selectedNote.year && <span>{selectedNote.year}</span>}{selectedNote.journal && <span>{selectedNote.journal}</span>}</div></div><div className="drawer-actions"><button className="primary-button" type="button" onClick={() => void openInObsidian(selectedNote.path)}>在 Obsidian 阅读全文</button><button className={contextPaths.includes(selectedNote.path) ? "quiet-button selected" : "quiet-button"} type="button" onClick={() => toggleContext(selectedNote.path)}>{contextPaths.includes(selectedNote.path) ? "已加入 Agent" : "+ Agent 材料"}</button><button className="quiet-button" type="button" onClick={() => void copyText(selectedNote.path, "笔记路径已复制。")}>复制路径</button></div>{selectedNote.isPaper && (<div className="drawer-citation-box"><div className="drawer-citation-header"><span className="eyebrow">LEGAL CITATION · 《法学引注手册》</span><button type="button" className="drawer-cite-open-btn" onClick={() => void openQuickCitation(selectedNote)}>精确引注弹窗 ↗</button></div><div className="drawer-citation-body"><p className="drawer-citation-text">{buildSimpleCitation(selectedNote)}</p><div className="drawer-citation-actions"><button type="button" onClick={() => void copyText(buildSimpleCitation(selectedNote), "Word 脚注已复制到剪贴板！")}>复制 Word 脚注</button><button type="button" onClick={() => void copyText(`[^${selectedNote.recordId || "cite"}]: ${buildSimpleCitation(selectedNote)}`, "Markdown 脚注已复制到剪贴板！")}>复制 Markdown 脚注</button><button type="button" onClick={() => void copyText(`${selectedNote.authors.join("、") || "作者待核"}前引文。`, "前引文已复制！")}>复制前引文</button>{(selectedNote.pdfLink || selectedNote.sourcePdf) && (<button type="button" className="pdf-split-btn" onClick={() => void openInObsidian(selectedNote.path)}>📄 在 Obsidian 分屏阅读 PDF (PDF++) ↗</button>)}</div></div></div>)}<section className="preview-summary"><span className="eyebrow">SUMMARY</span><p>{selectedNote.summary || "这篇导航笔记没有设置摘要，请在 Obsidian 中查看完整内容。"}</p></section><div className="drawer-columns"><div><span className="eyebrow">OUTLINE</span>{selectedNote.headings.slice(1, 16).map((heading, index) => <span className="outline-item" key={`${heading.text}-${index}`} style={{ paddingLeft: `${Math.max(0, heading.level - 1) * 11}px` }}>{heading.text}</span>)}</div><div><span className="eyebrow">LINKS</span><p>{selectedNote.links.length} 个出链 · {selectedNote.backlinks.length} 个反链</p></div></div><div className="link-preview"><span className="eyebrow">OUTGOING LINKS</span>{selectedNote.links.slice(0, 18).map((link) => link.path ? <button type="button" key={`${link.target}-${link.path}`} onClick={() => void openNote(link.path!)}>→ {link.label}</button> : <span key={link.target}>· {link.label}</span>)}</div><div className="backlinks"><span className="eyebrow">BACKLINKS</span>{selectedNote.backlinks.slice(0, 16).map((note) => <button type="button" key={note.path} onClick={() => void openNote(note.path)}>← {note.title}</button>)}</div></>}</aside>}
+
+      {quickCitationNote && (
+        <div className="modal-backdrop" onClick={() => setQuickCitationNote(null)}>
+          <div className="api-modal quick-citation-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-head">
+              <div>
+                <span className="eyebrow">2019 LEGAL CITATION · 一键引注与定位</span>
+                <h2>{quickCitationNote.title}</h2>
+                <p className="quick-citation-authors">
+                  {quickCitationNote.authors.join("、") || "作者待核"} · {quickCitationNote.journal || "刊物待核"} {quickCitationNote.year ? `(${quickCitationNote.year})` : ""}
+                </p>
+              </div>
+              <button type="button" onClick={() => setQuickCitationNote(null)}>×</button>
+            </div>
+
+            <div className="quick-citation-body">
+              <div className="quick-mode-tabs">
+                <button
+                  type="button"
+                  className={quickMode === "paraphrase" ? "active" : ""}
+                  onClick={() => void updateQuickCitation(quickCitationNote, "paraphrase", quickPinpoint)}
+                >
+                  转述 (参见)
+                </button>
+                <button
+                  type="button"
+                  className={quickMode === "direct" ? "active" : ""}
+                  onClick={() => void updateQuickCitation(quickCitationNote, "direct", quickPinpoint)}
+                >
+                  直接引语
+                </button>
+                <button
+                  type="button"
+                  className={quickMode === "general" ? "active" : ""}
+                  onClick={() => void updateQuickCitation(quickCitationNote, "general", quickPinpoint)}
+                >
+                  整篇文献
+                </button>
+                <button
+                  type="button"
+                  className={quickMode === "short" ? "active" : ""}
+                  onClick={() => void updateQuickCitation(quickCitationNote, "short", quickPinpoint)}
+                >
+                  前引文 (再次引用)
+                </button>
+              </div>
+
+              <div className="quick-pinpoint-row">
+                <label>
+                  具体引用页码 (Pinpoint Page)：
+                  <input
+                    type="text"
+                    value={quickPinpoint}
+                    placeholder={quickMode === "general" ? "整篇引用可留空" : "例如 15 或 15-18"}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      const val = event.target.value;
+                      setQuickPinpoint(val);
+                      void updateQuickCitation(quickCitationNote, quickMode, val);
+                    }}
+                  />
+                </label>
+              </div>
+
+              {quickError && (
+                <div className="quick-citation-error">⚠️ {quickError}</div>
+              )}
+
+              {quickResult && (
+                <div className="quick-citation-preview-card">
+                  <span className="eyebrow">引注预览 (《法学引注手册》规范)</span>
+                  <div className="quick-citation-text">{quickResult.citation}</div>
+                  {quickResult.shortCitation && quickMode !== "short" && (
+                    <div className="quick-citation-short-text">
+                      <small>再次引用形式：</small>{quickResult.shortCitation}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="quick-citation-actions-grid">
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={!quickResult}
+                  onClick={() => void copyText(quickResult?.citation || "", "Word 脚注已复制到剪贴板！")}
+                >
+                  📋 复制 Word 脚注
+                </button>
+                <button
+                  type="button"
+                  className="quiet-button"
+                  disabled={!quickResult}
+                  onClick={() => void copyText(quickResult?.markdownFootnote || quickResult?.obsidianDefinition || "", "Markdown 脚注已复制到剪贴板！")}
+                >
+                  📋 复制 Markdown 脚注
+                </button>
+                <button
+                  type="button"
+                  className="quiet-button"
+                  disabled={!quickResult}
+                  onClick={() => void copyText(quickResult?.shortCitation || `${quickCitationNote.authors.join("、")}前引文。`, "前引文短注已复制！")}
+                >
+                  📋 复制前引文
+                </button>
+                <button
+                  type="button"
+                  className="quiet-button"
+                  onClick={() => void openInObsidian(quickCitationNote.path)}
+                >
+                  📄 在 Obsidian 查看 / PDF++ ↗
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {notice && <button type="button" className="toast" onClick={() => setNotice("")}>{notice}<span>×</span></button>}
     </main>
   );

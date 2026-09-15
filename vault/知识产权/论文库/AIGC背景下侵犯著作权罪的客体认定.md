@@ -8,6 +8,7 @@ collection:
   - "人工智能-著作权"
 primary_domain: "著作权法"
 source_pdf: "data/AIGC背景下侵犯著作权罪的客体认定.pdf"
+pdf_link: "[[AIGC背景下侵犯著作权罪的客体认定.pdf]]"
 source_txt: "txt/AIGC背景下侵犯著作权罪的客体认定.txt"
 review_status: "fulltext_verified"
 original_keywords:
@@ -19,6 +20,11 @@ original_keywords:
 ---
 
 # AIGC背景下侵犯著作权罪的客体认定
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[AIGC背景下侵犯著作权罪的客体认定.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一句话主旨
 本文认为应在坚持“人类中心论”与刑法谦抑性的前提下，借助著作权法兜底条款和刑法空白罪状，将符合作品特征的人工智能生成内容（AIGC）纳入侵犯著作权罪的犯罪对象，并通过分级分类实现差异化保护。

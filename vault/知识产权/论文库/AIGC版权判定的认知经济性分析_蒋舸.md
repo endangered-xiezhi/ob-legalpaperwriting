@@ -29,6 +29,7 @@ original_keywords:
 author_affiliation:
 - 清华大学
 source_pdf: "data/AIGC版权判定的认知经济性分析_蒋舸.pdf"
+pdf_link: "[[AIGC版权判定的认知经济性分析_蒋舸.pdf]]"
 source_txt: "txt/AIGC版权判定的认知经济性分析_蒋舸.txt"
 review_status: fulltext_verified
 reviewed_at: '2026-07-16'
@@ -42,6 +43,11 @@ warning: ''
 [[✅“邻接权兜底保护”路径之反思——从古籍点校到人工智能生成内容_蒋舸]]
 都是更加关注经济成本上的区分
 # AIGC版权判定的认知经济性分析
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[AIGC版权判定的认知经济性分析_蒋舸.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一句话主旨
 面对AIGC的版权争议，不应刻意拔高独创性门槛，而应坚持“最低限度创造性标准”，因为区分“高独创性AIGC”与“低独创性AIGC”将耗费极其高昂且不必要的认知成本。

@@ -32,6 +32,7 @@ research_area:
 original_keywords: []
 author_affiliation: []
 source_pdf: "data/人工智能生成内容(AIGC)著作权保护笔谈录_张凌寒.pdf"
+pdf_link: "[[人工智能生成内容(AIGC)著作权保护笔谈录_张凌寒.pdf]]"
 source_txt: "txt/人工智能生成内容(AIGC)著作权保护笔谈录_张凌寒.txt"
 review_status: fulltext_verified
 reviewed_at: '2026-07-16'
@@ -44,6 +45,11 @@ warning: 原文为笔谈录，未设置摘要和关键词；author包含主持�
 主要领域：[[领域/01_著作权法|知识产权—著作权法]]
 
 # 人工智能生成内容(AIGC)著作权保护笔谈录
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[人工智能生成内容(AIGC)著作权保护笔谈录_张凌寒.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一句话主旨
 

@@ -37,6 +37,7 @@ research_area:
   - "侵权责任主体"
 source_url: "https://kns.cnki.net/kcms2/article/abstract?v=0VvkOTFCJRquyKsAmE77I92tIl-UeGlDbPacGZkXHvkYQk2SPVEJUepyfEjiPzG2xHOQyK3eFT6ERoeTx5yhwuvhOadM9nvyeIvBR-X5Bf2UL-yl4Q3z1xhVghOVpDneQ6ozExNZ7Q48M6gG9rnTuJbOf0MIjhFg3aJrmIDE70JfHrH5z1I-kA==&uniplatform=NZKPT&language=CHS"
 source_pdf: "data/以ChatGPT为代表的生成式AI内容的可版权性研究__Y863tX2o.pdf"
+pdf_link: "[[以ChatGPT为代表的生成式AI内容的可版权性研究__Y863tX2o.pdf]]"
 source_txt: "txt/以ChatGPT为代表的生成式AI内容的可版权性研究__Y863tX2o.txt"
 page_index_path: "page_index/以ChatGPT为代表的生成式AI内容的可版权性研究__Y863tX2o.json"
 cnki_citation_count: "106"
@@ -50,6 +51,11 @@ warning: ""
 ---
 
 # 以ChatGPT为代表的生成式AI内容的可版权性研究
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[以ChatGPT为代表的生成式AI内容的可版权性研究__Y863tX2o.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一、标题摘要初筛
 

@@ -46,3 +46,33 @@ button,input,textarea{font:inherit}button{color:inherit}.obsidian-app{min-height
 @media(max-width:1180px){.sidebar{width:220px}.main-shell{margin-left:220px}.content-shell{padding-inline:28px}.agent-grid,.journal-grid,.domain-card-grid{grid-template-columns:repeat(2,1fr)}.intake-config-grid{grid-template-columns:1fr}.intake-config-grid .journal-grid{grid-template-columns:repeat(4,1fr)}.intake-card{grid-template-columns:minmax(0,1fr) 330px}.auto-update-label{display:none}.note-table-head,.note-row{grid-template-columns:minmax(230px,1.5fr) minmax(130px,.7fr) 55px 110px}.note-table-head span:last-child,.note-row .row-actions{display:none}}
 @media(max-width:880px){.sidebar{position:static;width:100%;height:auto;padding:15px}.brand{padding-bottom:12px}.vault-chip{display:none}.sidebar nav{display:flex;overflow-x:auto;gap:6px}.sidebar nav button{flex:0 0 auto}.sidebar nav button small{display:none}.sidebar-bottom{display:none}.main-shell{margin-left:0}.topbar{padding-inline:16px}.top-actions button:first-child{display:none}.content-shell{padding:24px 18px 60px}.welcome-card{padding:36px}.vault-pulse{display:none}.stat-row,.route-grid{grid-template-columns:repeat(2,1fr)}.overview-columns,.agent-workspace,.library-layout,.citation-layout,.export-layout{grid-template-columns:1fr}.folder-panel{position:static}.folder-panel>button{width:auto;display:inline-block}.topic-grid{grid-template-columns:1fr}.capture-flow,.relation-method-grid{grid-template-columns:1fr 1fr}.capture-flow>b{display:none}.intake-config-grid .journal-grid{grid-template-columns:repeat(2,1fr)}.intake-card{grid-template-columns:1fr}.relation-selection{align-items:flex-start;flex-direction:column}}
 @media(max-width:580px){.topbar{height:62px}.global-search{width:100%}.global-search kbd,.top-actions{display:none}.welcome-card{min-height:0;padding:28px 23px}.welcome-copy h1{font-size:34px}.welcome-actions{align-items:stretch;flex-direction:column}.stat-row,.route-grid,.agent-grid,.journal-grid,.domain-card-grid,.intake-config-grid .journal-grid,.relation-method-grid,.field-row{grid-template-columns:1fr}.stat-card{grid-template-columns:80px 1fr}.note-table-head{display:none}.note-row{grid-template-columns:1fr 70px;gap:8px}.note-row>span:nth-of-type(1),.note-row>span:nth-of-type(3),.note-row .row-actions{display:none}.topic-card{grid-template-columns:30px 1fr;padding:18px}.capture-flow{grid-template-columns:1fr}.crawler-bar{align-items:stretch;flex-direction:column}.page-intro h1{font-size:34px}.note-drawer{width:100%;padding-inline:19px}.drawer-columns{grid-template-columns:1fr}.drawer-actions,.intake-review>div,.citation-actions{flex-direction:column}.toast{left:14px;right:14px;bottom:14px}}
+
+/* Quick Citation & PDF++ Enhancements */
+.cite-action-btn{background:var(--purple-soft) !important;color:var(--purple) !important;border-color:#cfc3dd !important;font-weight:600}
+.cite-action-btn:hover{background:#dfd2f2 !important;color:#50317e !important;border-color:#b9a5d4 !important}
+.quick-citation-modal{width:min(620px,94vw) !important;padding:24px !important}
+.quick-citation-authors{color:var(--muted);font-size:11px;margin:5px 0 0}
+.quick-mode-tabs{display:flex;gap:6px;margin:16px 0 12px;overflow-x:auto}
+.quick-mode-tabs button{border:1px solid var(--line);background:#fbfaf7;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:11px;white-space:nowrap}
+.quick-mode-tabs button.active{background:var(--purple);color:#fff;border-color:var(--purple);font-weight:650}
+.quick-pinpoint-row{margin-bottom:14px}
+.quick-pinpoint-row label{display:grid;gap:6px;font-size:10px;font-weight:700;color:#4f5955}
+.quick-pinpoint-row input{border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:#fbfaf7;outline:0;font-size:12px}
+.quick-pinpoint-row input:focus{border-color:#9f83c6;background:#fff}
+.quick-citation-error{color:#a0472e;background:#fff3ee;border:1px solid #e4bcae;border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:11px}
+.quick-citation-preview-card{border-left:3px solid var(--purple);background:var(--purple-soft);padding:14px 16px;border-radius:0 10px 10px 0;margin-bottom:16px}
+.quick-citation-text{font:500 15px/1.75 Georgia,"Songti SC",serif;color:var(--ink);margin-top:6px}
+.quick-citation-short-text{margin-top:8px;padding-top:8px;border-top:1px dashed #d5c8e8;color:#5a4975;font-size:11px}
+.quick-citation-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.drawer-citation-box{margin:15px 0;border:1px solid var(--line);border-radius:12px;background:#f8f6f1;padding:14px}
+.drawer-citation-header{display:flex;justify-content:space-between;align-items:center}
+.drawer-cite-open-btn{border:0;background:transparent;color:var(--purple);cursor:pointer;font-size:10px;font-weight:700}
+.drawer-citation-text{font:500 13px/1.65 Georgia,"Songti SC",serif;color:#2c3532;margin:8px 0 12px}
+.drawer-citation-actions{display:flex;flex-wrap:wrap;gap:6px}
+.drawer-citation-actions button{border:1px solid var(--line);border-radius:6px;background:#fff;padding:6px 9px;cursor:pointer;font-size:9px}
+.drawer-citation-actions button:hover{border-color:#9f83c6;color:var(--purple)}
+.pdf-split-btn{background:var(--teal-soft) !important;color:var(--teal) !important;border-color:#a9c6bd !important;font-weight:650}
+.pdf-split-btn:hover{background:#d5ebe3 !important}
+.citation-search-filter{margin-bottom:10px}
+.citation-search-filter input{width:100%;border:1px solid var(--line);border-radius:8px;background:#fbfaf7;padding:9px 12px;outline:0;font-size:11px}
+

@@ -8,6 +8,7 @@ collection:
   - "人工智能-著作权"
 primary_domain: "著作权法"
 source_pdf: "data/由ChatGPT窥探智能时代我国著作权法坚守与变革.pdf"
+pdf_link: "[[由ChatGPT窥探智能时代我国著作权法坚守与变革.pdf]]"
 source_txt: "txt/由ChatGPT窥探智能时代我国著作权法坚守与变革.txt"
 review_status: "fulltext_verified"
 original_keywords:
@@ -19,6 +20,11 @@ warning: "未能从文本明确提取期刊名称"
 ---
 
 # 由ChatGPT窥探智能时代我国著作权法坚守与变革
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[由ChatGPT窥探智能时代我国著作权法坚守与变革.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一句话主旨
 在坚持“以人为本”理念下，人工智能生成内容在通过“图灵测试”并符合独创性时应受著作权保护（归属于使用者），同时人工智能的数据输入与机器学习属于合理使用，未来应增设“文本与数据挖掘”的合理使用条款。

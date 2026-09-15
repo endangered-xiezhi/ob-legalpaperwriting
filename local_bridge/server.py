@@ -279,6 +279,8 @@ def note_record(path: Path) -> dict[str, Any]:
         "pageRange": str(metadata.get("page_range") or ""),
         "doi": str(metadata.get("doi") or ""),
         "cnkiId": str(metadata.get("cnki_id") or ""),
+        "sourcePdf": str(metadata.get("source_pdf") or ""),
+        "pdfLink": str(metadata.get("pdf_link") or ""),
         "warning": warning,
         "topics": list_value(metadata.get("trend_topics")),
         "paths": list_value(metadata.get("research_paths")),
@@ -443,7 +445,7 @@ def update_intake_screening(relative: str, decision: str, reason: str = "") -> d
 
 
 def render_legal_citation(relative: str, mode: str, pinpoint: str = "") -> dict[str, Any]:
-    if mode not in {"direct", "paraphrase", "general"}:
+    if mode not in {"direct", "paraphrase", "general", "short"}:
         raise ValueError("引注模式不正确")
     pinpoint = clean_short_text(pinpoint, maximum=30)
     if pinpoint and not re.fullmatch(r"\d+(?:\s*[-–—、,，]\s*\d+)*", pinpoint):
@@ -451,33 +453,55 @@ def render_legal_citation(relative: str, mode: str, pinpoint: str = "") -> dict[
     path = safe_knowledge_path(relative)
     metadata = parse_frontmatter(path.read_text(encoding="utf-8", errors="replace"))
     authors = list_value(metadata.get("author"))
-    required = {
-        "作者": "、".join(authors),
-        "题名": str(metadata.get("title") or ""),
-        "刊物": str(metadata.get("journal") or ""),
-        "年份": str(metadata.get("year") or ""),
-        "期号": str(metadata.get("issue") or ""),
-    }
-    missing = [label for label, value in required.items() if not value]
-    if mode in {"direct", "paraphrase"} and not pinpoint:
-        missing.append("具体页码")
-    if missing:
-        return {"ok": False, "error": "引注字段待补：" + "、".join(missing), "missing": missing}
-    prefix = "参见" if mode == "paraphrase" else ""
-    citation = (
-        f"{prefix}{required['作者']}：《{required['题名']}》，载《{required['刊物']}》"
-        f"{required['年份']}年第{required['期号']}期"
-    )
-    if pinpoint:
-        citation += f"，第{pinpoint}页"
-    citation += "。"
+    author_str = "、".join(authors) or ""
+    title_str = str(metadata.get("title") or "").strip()
+    journal_str = str(metadata.get("journal") or "").strip()
+    year_str = str(metadata.get("year") or "").strip()
+    issue_str = str(metadata.get("issue") or "").strip()
+
+    if mode == "short":
+        if not authors:
+            return {"ok": False, "error": "引注字段待补：作者", "missing": ["作者"]}
+        if not pinpoint:
+            return {"ok": False, "error": "前引文须填写具体页码", "missing": ["具体页码"]}
+        citation = f"{author_str}前引文，第{pinpoint}页。"
+        short_citation = citation
+    else:
+        missing = []
+        if not authors:
+            missing.append("作者")
+        if not title_str:
+            missing.append("题名")
+        if not journal_str:
+            missing.append("刊物")
+        if not year_str:
+            missing.append("年份")
+        if mode in {"direct", "paraphrase"} and not pinpoint:
+            missing.append("具体页码")
+        if missing:
+            return {"ok": False, "error": "引注字段待补：" + "、".join(missing), "missing": missing}
+
+        prefix = "参见" if mode == "paraphrase" else ""
+        period_info = f"{year_str}年第{issue_str}期" if issue_str else f"{year_str}年"
+        citation = f"{prefix}{author_str}：《{title_str}》，载《{journal_str}》{period_info}"
+        if pinpoint:
+            citation += f"，第{pinpoint}页"
+        citation += "。"
+
+        short_citation = f"{author_str}前引文"
+        if pinpoint:
+            short_citation += f"，第{pinpoint}页"
+        short_citation += "。"
+
     cite_id = str(metadata.get("record_id") or hashlib.sha256(relative.encode("utf-8")).hexdigest()[:12])
     return {
         "ok": True,
         "citation": citation,
+        "shortCitation": short_citation,
         "wordFootnote": citation,
         "obsidianMarker": f"[^{cite_id}]",
         "obsidianDefinition": f"[^{cite_id}]: {citation}",
+        "markdownFootnote": f"[^{cite_id}]: {citation}",
         "verification": "metadata_ready" if not pinpoint else "pinpoint_unverified",
     }
 

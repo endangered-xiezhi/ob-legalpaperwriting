@@ -28,6 +28,7 @@ research_area:
 original_keywords: []
 author_affiliation: []
 source_pdf: "data/人工智能生成的内容（AIGC）受著作权法保护吗_朱阁.pdf"
+pdf_link: "[[人工智能生成的内容（AIGC）受著作权法保护吗_朱阁.pdf]]"
 source_txt: "txt/人工智能生成的内容（AIGC）受著作权法保护吗_朱阁.txt"
 review_status: fulltext_verified
 reviewed_at: '2026-07-16'
@@ -40,6 +41,11 @@ warning: ''
 主要领域：[[领域/01_著作权法|知识产权—著作权法]]
 
 # 人工智能生成的内容（AIGC）受著作权法保护吗
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[人工智能生成的内容（AIGC）受著作权法保护吗_朱阁.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一句话主旨
 一场汇聚了法官、学者和实务界专家的巅峰对话，全方位展示了支持AIGC享有版权（朱阁、崔国斌）与坚决反对AIGC享有版权（王迁、张湖月）在“独创性标准”与“人类创作红线”上的激烈交锋。

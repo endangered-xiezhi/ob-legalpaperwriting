@@ -8,6 +8,7 @@ collection:
   - "人工智能-著作权"
 primary_domain: "著作权法"
 source_pdf: "data/AI文生图的法律属性与权利归属研究.pdf"
+pdf_link: "[[AI文生图的法律属性与权利归属研究.pdf]]"
 source_txt: "txt/AI文生图的法律属性与权利归属研究.txt"
 review_status: "fulltext_verified"
 original_keywords:
@@ -19,6 +20,11 @@ original_keywords:
 ---
 
 # AI文生图的法律属性与权利归属研究
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[AI文生图的法律属性与权利归属研究.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一句话主旨
 本文通过分析“AI文生图”案件，认为人工智能大模型不能成为作者，但体现了人类独创性智力投入的AI生成图片属于美术作品，其著作权归属于使用者，这一规则符合利益衡量和产业发展需求。

@@ -31,6 +31,7 @@ original_keywords:
 author_affiliation:
 - 清华大学
 source_pdf: "data/论用户主张AIGC版权的“最低限度创造性标准”_蒋舸.pdf"
+pdf_link: "[[论用户主张AIGC版权的“最低限度创造性标准”_蒋舸.pdf]]"
 source_txt: "txt/论用户主张AIGC版权的“最低限度创造性标准”_蒋舸.txt"
 review_status: fulltext_verified
 reviewed_at: '2026-07-16'
@@ -43,6 +44,11 @@ warning: ''
 主要领域：[[领域/01_著作权法|知识产权—著作权法]]
 
 # 论用户主张AIGC版权的“最低限度创造性标准”
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[论用户主张AIGC版权的“最低限度创造性标准”_蒋舸.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 ## 一句话主旨
 判断用户能否主张 AIGC 版权，不应要求用户绝对控制 AI，而应回到版权法一贯的“最低限度创造性”标准。

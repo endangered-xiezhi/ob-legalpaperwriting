@@ -200,6 +200,16 @@ def render_frontmatter(metadata: dict[str, Any], created_at: str) -> str:
     if clean_text(metadata.get("ingest_warning")):
         warnings.append(clean_text(metadata["ingest_warning"]))
     warning = "；".join(warnings)
+    # 计算规范的 PDF 内部双链名称
+    pdf_source = clean_text(metadata.get('pdf_path') or metadata.get('source_pdf') or '')
+    if pdf_source:
+        pdf_file = Path(pdf_source).name
+    else:
+        stem = safe_filename(clean_text(metadata.get('title') or ''))
+        suffix = str(metadata.get('record_id', ''))[-8:]
+        pdf_file = f"{stem}__{suffix}.pdf" if stem else ""
+    pdf_link = f"[[{pdf_file}]]" if pdf_file else ""
+
     lines = [
         "---",
         "schema_version: 2",
@@ -224,7 +234,8 @@ def render_frontmatter(metadata: dict[str, Any], created_at: str) -> str:
         *yaml_list("author_affiliation", metadata.get("affiliations", []) if isinstance(metadata.get("affiliations"), list) else []),
         'primary_domain: ""',
         f"source_url: {yaml_scalar(metadata.get('detail_url') or metadata.get('url', ''))}",
-        f"source_pdf: {yaml_scalar(metadata.get('pdf_path', ''))}",
+        f"source_pdf: {yaml_scalar(pdf_file)}",
+        f"pdf_link: {yaml_scalar(pdf_link)}",
         f"source_txt: {yaml_scalar(metadata.get('txt_path', ''))}",
         f"page_index_path: {yaml_scalar(metadata.get('page_index_path', ''))}",
         f"cnki_citation_count: {yaml_scalar(metadata.get('citation_count', ''))}",
@@ -244,6 +255,15 @@ def render_stub_body(metadata: dict[str, Any]) -> str:
     title = clean_text(metadata.get("title")) or "待核题名"
     abstract = clean_text(metadata.get("abstract"))
     keywords = "；".join(metadata.get("keywords", [])) if isinstance(metadata.get("keywords"), list) else ""
+    pdf_source = clean_text(metadata.get('pdf_path') or metadata.get('source_pdf') or '')
+    if pdf_source:
+        pdf_file = Path(pdf_source).name
+    else:
+        stem = safe_filename(clean_text(metadata.get('title') or ''))
+        suffix = str(metadata.get('record_id', ''))[-8:]
+        pdf_file = f"{stem}__{suffix}.pdf" if stem else ""
+    pdf_link = f"[[{pdf_file}]]" if pdf_file else "待关联"
+
     return f"""
 {STUB_MARKER}
 
@@ -251,6 +271,10 @@ def render_stub_body(metadata: dict[str, Any]) -> str:
 
 > [!warning] 新采集样板
 > 本页由知网采集器创建，尚未正式纳入论文库。元数据、观点、关系和引注均须人工审核。
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：{pdf_link}
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 `Option` (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
 
 ## 一、标题摘要初筛
 

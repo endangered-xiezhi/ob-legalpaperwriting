@@ -15,6 +15,7 @@ out/
 dist/
 build/
 .wrangler/
+*.tsbuildinfo
 
 # Python artifacts
 __pycache__/

@@ -28,6 +28,7 @@ author_affiliation:
 primary_domain: ""
 source_url: "https://kns.cnki.net/kcms2/article/abstract?v=0VvkOTFCJRoLhtBO3MxD0GDOkjP-ez4pGiEqEVZmvMHe_X3FHICYyNLg7KGuyjNXiQNmeRxTKJLNr6R_qZIxiyNNRCXb0v3c5vU5hhMemjAGrFpMHg_XHV4OiSLNB_wFRSydYqTnETFQ-MTcb412jL6DfwVPGwM500wid1hsIpkyxMsMYjjJfg==&uniplatform=NZKPT&language=CHS"
 source_pdf: "data/生成式人工智能平台的著作权侵权责任__-aA6c3WW.pdf"
+pdf_link: "[[生成式人工智能平台的著作权侵权责任__-aA6c3WW.pdf]]"
 source_txt: "txt/生成式人工智能平台的著作权侵权责任__-aA6c3WW.txt"
 page_index_path: "page_index/生成式人工智能平台的著作权侵权责任__-aA6c3WW.json"
 cnki_citation_count: "50"
@@ -43,6 +44,11 @@ warning: ""
 <!-- LEXTRACE:GENERATED-STUB -->
 
 # 生成式人工智能平台的著作权侵权责任
+
+> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[生成式人工智能平台的著作权侵权责任__-aA6c3WW.pdf]]
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 Option (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+
 
 > [!warning] 新采集样板
 > 本页由知网采集器创建，尚未正式纳入论文库。元数据、观点、关系和引注均须人工审核。
