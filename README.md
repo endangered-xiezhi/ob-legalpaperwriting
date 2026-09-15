@@ -230,15 +230,25 @@ tags: [著作权法, 视听作品, 权利归属]
 | **▲ GitHub Codespaces** | **每月 60 小时免费** | **100% 完全支持** | 即使身边没有电脑，也可以在 iPad 或任意浏览器中一键打开完整的云端 VS Code 开发环境，直接在线编辑文献卡与调试代码。 |
 | **▲ 团队协同 (Collaborators)**| **完全免费且不限人数** | **100% 完全支持** | 在仓库 `Settings ➔ Collaborators` 中可精准添加特定导师、师兄妹的 GitHub 账号赋予只读或读写权限，外人完全无法检索或查看。 |
 
-### 2. 五分钟快速完成 Vercel 私有部署实操
+### 2. 极简云端托管实操指南（Vercel / Codespaces / Actions）
 
-```
-1. 访问 https://vercel.com 并使用您的 GitHub 账号快捷登录；
-2. 点击右上角 "Add New..." ➔ "Project"；
-3. 在 Import Git Repository 列表中，找到并选中私有仓库 "ob-legalpaperwriting"；
-4. 构建预设选择 "Next.js"，点击 "Deploy"；
-5. 等待约 1 分钟，您的专属云端法学工作台即刻部署完成并全天候在线！
-```
+> 📖 **完整详尽图文指引请查阅**：[《云端免费托管与部署实操手册（零门槛版）》](docs/云端免费托管与部署实操手册_零门槛.md)
+
+#### 🚀 方案 A：Vercel 30 秒一键上线（永久免费 / 手机平板即用）
+1. 访问 [https://vercel.com/signup](https://vercel.com/signup) 并使用您的 GitHub 账号登录；
+2. 点击右上角 **"Add New..." ➔ "Project"**；
+3. 在 Import Git Repository 列表中，选中私有仓库 **`ob-legalpaperwriting`**；
+4. 项目已内置 `vercel.json`，无需修改任何设置，直接点击 **"Deploy"**；
+5. 约 40 秒后即可获得永久在线的工作台网址（如 `https://ob-legalpaperwriting.vercel.app`），代码对公众完全保密！
+
+#### 💻 方案 B：GitHub Codespaces 云端免装机工作台（浏览器即开 VS Code）
+1. 在本私有仓库网页右上角点击绿色的 **"Code" ➔ "Codespaces"**；
+2. 点击 **"Create codespace on main"**；
+3. 浏览器即刻在云端启动完整的 VS Code，已为您全自动配置好 Python 3.11、Node.js 22 与全套依赖，免除任何本机安装！
+
+#### ⚡ 方案 C：GitHub Actions 云端自动构建与核验（已全自动生效）
+- 本项目已内置 `.github/workflows/ci.yml`；
+- 每次您向私有仓库提交或更新论文笔记，GitHub 云端虚拟机会自动执行文献完整性核验、依赖测试与发布包构建，并保存在 Actions Artifacts 中。
 
 ---
 

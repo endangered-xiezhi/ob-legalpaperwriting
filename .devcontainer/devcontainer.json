@@ -1,0 +1,36 @@
+{
+  "name": "法脉 LexTrace 云端学术工作台 (GitHub Codespaces)",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11",
+      "installTools": true
+    }
+  },
+  "forwardPorts": [3000, 8765],
+  "portsAttributes": {
+    "3000": {
+      "label": "LexTrace 网页研究工作台",
+      "onAutoForward": "openBrowser"
+    },
+    "8765": {
+      "label": "Python 本地知识库桥接器",
+      "onAutoForward": "silent"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "esbenp.prettier-vscode",
+        "bierner.markdown-preview-github-styles",
+        "foam.foam-vscode"
+      ],
+      "settings": {
+        "files.autoSave": "afterDelay",
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      }
+    }
+  },
+  "postCreateCommand": "npm install && pip install -r requirements.txt"
+}
