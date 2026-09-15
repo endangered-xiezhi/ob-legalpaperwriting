@@ -28,18 +28,38 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BRIDGE_ROOT = Path(__file__).resolve().parent
 RUNTIME_ROOT = BRIDGE_ROOT / "runtime"
 PAPER_SCHEMA_PATH = BRIDGE_ROOT / "paper-schema.json"
-CRAWLER_ROOT = Path(
-    os.environ.get(
-        "LEXTRACE_CNKI_ROOT",
-        "" + str(PROJECT_ROOT / "cnki_crawler") + "",
-    )
-).expanduser()
-VAULT_ROOT = Path(
-    os.environ.get(
-        "LEXTRACE_OBSIDIAN_VAULT",
-        str(PROJECT_ROOT / "vault"),
-    )
-).expanduser()
+def resolve_crawler_root() -> Path:
+    env_crawler = os.environ.get("LEXTRACE_CNKI_ROOT")
+    if env_crawler:
+        candidate = Path(env_crawler).expanduser().resolve()
+        if candidate.exists():
+            return candidate
+    project_crawler = (PROJECT_ROOT / "cnki_crawler").resolve()
+    if project_crawler.exists():
+        return project_crawler
+    fallback = (Path.home() / "Downloads" / "复旦校内" / "大三下" / "ZhiWan_pdf").resolve()
+    if fallback.exists():
+        return fallback
+    return project_crawler
+
+
+def resolve_vault_root() -> Path:
+    env_vault = os.environ.get("LEXTRACE_OBSIDIAN_VAULT")
+    if env_vault:
+        candidate = Path(env_vault).expanduser().resolve()
+        if (candidate / "知识产权").exists():
+            return candidate
+    project_vault = (PROJECT_ROOT / "vault").resolve()
+    if (project_vault / "知识产权").exists():
+        return project_vault
+    user_vault = (Path.home() / "Downloads" / "Obsidian Vault").resolve()
+    if (user_vault / "知识产权").exists():
+        return user_vault
+    return project_vault
+
+
+CRAWLER_ROOT = resolve_crawler_root()
+VAULT_ROOT = resolve_vault_root()
 KNOWLEDGE_ROOT = VAULT_ROOT / "知识产权"
 OBSIDIAN_CONFIG_PATH = Path(
     os.environ.get(

@@ -33,12 +33,13 @@ def main() -> None:
     crawler_config.TARGET_JOURNALS = journals
     crawler_config.STRICT_JOURNAL_MATCH = bool(selection.get("strictJournal", True))
     crawler_config.CAPTURE_PROFILE = selection.get("profile", {})
-    str(Path(__file__).resolve().parent.parent / "vault") = os.environ.get(
+    vault_root = os.environ.get(
         "LEXTRACE_OBSIDIAN_VAULT",
         str(Path(__file__).resolve().parent.parent / "vault"),
     )
+    crawler_config.OBSIDIAN_VAULT_ROOT = vault_root
     crawler_config.PAPER_STUB_DIR = str(
-        Path(str(Path(__file__).resolve().parent.parent / "vault")) / "知识产权" / "论文库"
+        Path(vault_root) / "知识产权" / "论文库"
     )
 
     print("=" * 62)
