@@ -170,6 +170,17 @@ export default function ObsidianWorkbench() {
       setBridgeState("connected");
       if (silent) setNotice("检测到 Obsidian 内容变化，目录已自动更新。");
     } catch {
+      try {
+        const fallbackRes = await fetch("/navigation-fallback.json");
+        if (fallbackRes.ok) {
+          const fallbackData = (await fallbackRes.json()) as NavigationData;
+          setNavigation(fallbackData);
+          if (!silent) setBridgeState("connected");
+          return;
+        }
+      } catch {
+        // ignore fallback error
+      }
       if (!silent) setBridgeState("offline");
     }
   }, []);
