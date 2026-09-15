@@ -66,11 +66,20 @@ CANONICAL_DOMAINS = [
 CANONICAL_DOMAIN_NAMES = {name for name, _ in CANONICAL_DOMAINS}
 QUICK_LINKS = [
     ("研究导航", "知识产权/00_知识产权研究导航.md", "领域、争议与论文的动态入口"),
+    ("法规与典型案例", "知识产权/法律法规与典型案例/README.md", "50部知产法规/司法解释与395篇权威案例"),
     ("论文总览", "知识产权/00_知识产权论文总览.md", "全库结构与统计口径"),
     ("近五年趋势", "知识产权/研究趋势/近五年研究趋势总览.md", "库内研究问题的年度演变"),
     ("年度索引", "知识产权/研究趋势/年度论文索引.md", "按发表年份进入论文"),
     ("学者索引", "知识产权/研究趋势/学者观点索引.md", "按作者查找观点与对话"),
     ("整理 SOP", "知识产权/研究趋势/法学论文整理SOP_Agent通用执行手册.md", "新材料整理、核验与入库规范"),
+]
+RULEBOOK_HUBS = [
+    ("商标法及案例库", "知识产权/法律法规与典型案例/商标/商标.md", "商标法87条、行政法规、解释与典型案例"),
+    ("专利法及案例库", "知识产权/法律法规与典型案例/专利/专利.md", "专利法82条、实施细则、解释与典型案例"),
+    ("著作权法及案例库", "知识产权/法律法规与典型案例/著作权/著作权.md", "著作权法67条、实施条例、解释与典型案例"),
+    ("通用规则及案例库", "知识产权/法律法规与典型案例/知识产权通用规则/知识产权通用规则.md", "管辖、证据、保全、惩罚性赔偿等跨域规则"),
+    ("植物新品种", "知识产权/法律法规与典型案例/植物新品种/植物新品种.md", "条例49条、司法解释与典型案例"),
+    ("最高法审判参考", "知识产权/法律法规与典型案例/_审判参考/法答网精选答问-第33批·知识产权司法保护专题（2025-12-05）.md", "最高法法答网精选答问知识产权司法保护专题"),
 ]
 WIKI_LINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?\]\]")
 HEADING = re.compile(r"^(#{1,4})\s*(.+?)\s*$", re.MULTILINE)
@@ -336,6 +345,10 @@ def navigation_payload() -> dict[str, Any]:
         record for record in records
         if record["folder"] == "知识产权/清华研究路径" and not record["title"].startswith("清华知识产权研究路径总览")
     ]
+    rules_and_cases = [
+        record for record in records
+        if record["path"].startswith("知识产权/法律法规与典型案例/")
+    ]
     searchable = [record for record in records if not is_navigation_excluded(record["path"])]
     version = vault_version()
     return {
@@ -353,10 +366,15 @@ def navigation_payload() -> dict[str, Any]:
             "excluded": len(excluded),
             "unclassified": len(unclassified),
             "domains": len(domains),
+            "rulesAndCases": len(rules_and_cases),
         },
         "quickLinks": [
             {"title": title, "path": path, "caption": caption}
             for title, path, caption in QUICK_LINKS if path in by_path
+        ],
+        "rulebookHubs": [
+            {"title": title, "path": path, "caption": caption}
+            for title, path, caption in RULEBOOK_HUBS if path in by_path
         ],
         "domains": domains,
         "controversies": sorted(controversies, key=lambda record: record["title"]),

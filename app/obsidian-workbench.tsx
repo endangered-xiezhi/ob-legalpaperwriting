@@ -54,8 +54,9 @@ type NavigationData = {
   scope: string;
   generatedAt: string;
   version: string;
-  stats: { notes: number; papers: number; formal: number; pending: number; intake: number; excluded: number; unclassified: number; domains: number };
+  stats: { notes: number; papers: number; formal: number; pending: number; intake: number; excluded: number; unclassified: number; domains: number; rulesAndCases?: number };
   quickLinks: Array<{ title: string; path: string; caption: string }>;
+  rulebookHubs?: Array<{ title: string; path: string; caption: string }>;
   domains: Array<{ name: string; path: string; count: number; summary: string }>;
   controversies: NoteRecord[];
   researchPaths: NoteRecord[];
@@ -449,8 +450,8 @@ export default function ObsidianWorkbench() {
         <section className="stat-row" aria-label="知识库状态">
           {[
             [navigation?.stats.formal ?? "—", "规范论文", "进入正式目录"],
+            [navigation?.stats.rulesAndCases ?? "448", "法规与案例", "50部法规+395篇案例"],
             [navigation?.stats.intake ?? "—", "新采集样板", "等待初筛或Agent"],
-            [navigation?.stats.unclassified ?? "—", "待归类", "非七类领域字段"],
             [navigation?.stats.domains ?? "—", "现有领域", "不自动改写分类"],
           ].map(([value, label, hint]) => <div className="stat-card" key={String(label)}><strong>{value}</strong><span>{label}</span><small>{hint}</small></div>)}
         </section>
@@ -473,15 +474,34 @@ export default function ObsidianWorkbench() {
           ))}
         </section>
 
+        {navigation?.rulebookHubs && navigation.rulebookHubs.length > 0 && (
+          <>
+            <div className="section-heading spaced-heading">
+              <div><span className="eyebrow">02 · STATUTES & CASES</span><h2>知识产权法律法规与典型案例库</h2></div>
+              <span>致谢 @StefanCHEN2026 · 法条 ↔ 司法解释 ↔ 典型案例双链网络</span>
+            </div>
+            <section className="route-grid">
+              {navigation.rulebookHubs.map((hub, index) => (
+                <button className="route-card" type="button" key={hub.path} onClick={() => void openNote(hub.path)}>
+                  <span className="route-index">R0{index + 1}</span>
+                  <strong>{hub.title}</strong>
+                  <small>{hub.caption}</small>
+                  <span className="route-enter">查看法条与案例 ↗</span>
+                </button>
+              ))}
+            </section>
+          </>
+        )}
+
         <section className="overview-columns">
           <div className="panel-card">
-            <div className="panel-head"><div><span className="eyebrow">02 · CONTROVERSIES</span><h3>争议专题</h3></div><button type="button" onClick={() => setView("relations")}>查看全部</button></div>
+            <div className="panel-head"><div><span className="eyebrow">03 · CONTROVERSIES</span><h3>争议专题</h3></div><button type="button" onClick={() => setView("relations")}>查看全部</button></div>
             <div className="domain-list">
               {(navigation?.controversies ?? []).slice(0, 7).map((note, index) => <button type="button" key={note.path} onClick={() => void openNote(note.path)}><span>{String(index + 1).padStart(2, "0")}</span><strong>{note.title}</strong><em>进入</em></button>)}
             </div>
           </div>
           <div className="panel-card">
-            <div className="panel-head"><div><span className="eyebrow">03 · RECENT</span><h3>最近新增的规范论文</h3></div><span>{navigation ? shortDate(navigation.generatedAt) : "—"}</span></div>
+            <div className="panel-head"><div><span className="eyebrow">04 · RECENT</span><h3>最近新增的规范论文</h3></div><span>{navigation ? shortDate(navigation.generatedAt) : "—"}</span></div>
             <div className="recent-list">
               {(navigation?.recent ?? []).slice(0, 8).map((note) => <button type="button" key={note.path} onClick={() => void openNote(note.path)}><span className="file-mark">MD</span><span><strong>{note.title}</strong><small>{note.authors.join("、")} · {note.year || shortDate(note.modified)}</small></span></button>)}
             </div>
