@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>法脉 LexTrace —— 麦肯锡式战略评估与执行报告</title>
+  <style>
+    :root {
+      --primary-navy: #0A192F;
+      --secondary-navy: #172A45;
+      --accent-gold: #C59B27;
+      --accent-gold-light: #F4E8C1;
+      --text-main: #1E293B;
+      --text-muted: #64748B;
+      --bg-light: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --border-color: #E2E8F0;
+      --success-green: #0D9488;
+      --blue-tag: #2563EB;
+      --font-serif: "Songti SC", "SimSun", "Georgia", serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      background-color: var(--bg-light);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary-navy) 0%, var(--secondary-navy) 100%);
+      color: #ffffff;
+      padding: 4rem 2rem 3.5rem;
+      border-bottom: 4px solid var(--accent-gold);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: rgba(197, 155, 39, 0.2);
+      border: 1px solid var(--accent-gold);
+      color: var(--accent-gold-light);
+      padding: 0.35rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-radius: 4px;
+      margin-bottom: 1.25rem;
+    }
+
+    h1.report-title {
+      font-family: var(--font-serif);
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.25;
+      margin-bottom: 1rem;
+    }
+
+    p.report-subtitle {
+      font-size: 1.2rem;
+      color: #94A3B8;
+      max-width: 850px;
+      font-weight: 300;
+    }
+
+    .meta-bar {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+      font-size: 0.9rem;
+      color: #CBD5E1;
+    }
+
+    .meta-item strong {
+      color: #ffffff;
+      margin-left: 0.25rem;
+    }
+
+    /* KPI Grid */
+    .kpi-section {
+      margin-top: -2.5rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      padding: 1.75rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      border-left: 4px solid var(--accent-gold);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .kpi-number {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--primary-navy);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      font-family: var(--font-serif);
+    }
+
+    .kpi-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--success-green);
+      margin-top: 0.4rem;
+      font-weight: 500;
+    }
+
+    /* Section Styling */
+    section {
+      margin-bottom: 4rem;
+    }
+
+    .section-header {
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 1.8rem;
+      color: var(--primary-navy);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-title::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 1.4rem;
+      background-color: var(--accent-gold);
+      border-radius: 2px;
+    }
+
+    .section-en {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Problem Solution Card */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 2rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-problem {
+      border-top: 4px solid #EF4444;
+    }
+
+    .card-solution {
+      border-top: 4px solid var(--success-green);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-problem .card-title { color: #DC2626; }
+    .card-solution .card-title { color: var(--success-green); }
+
+    .card ul {
+      list-style-type: none;
+    }
+
+    .card li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .card-problem li::before {
+      content: "✕";
+      position: absolute;
+      left: 0;
+      color: #EF4444;
+      font-weight: bold;
+    }
+
+    .card-solution li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--success-green);
+      font-weight: bold;
+    }
+
+    /* MECE Architecture Table */
+    .mece-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-card);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+      margin-bottom: 2rem;
+    }
+
+    .mece-table th {
+      background: var(--primary-navy);
+      color: #ffffff;
+      text-align: left;
+      padding: 1rem 1.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .mece-table td {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.95rem;
+      vertical-align: top;
+    }
+
+    .mece-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .mece-table tr:hover td {
+      background-color: #F1F5F9;
+    }
+
+    .layer-badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: #E2E8F0;
+      color: var(--primary-navy);
+    }
+
+    /* Novice Step Cards */
+    .step-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .step-item {
+      display: flex;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    .step-number {
+      background: var(--secondary-navy);
+      color: var(--accent-gold);
+      min-width: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.5rem;
+      font-family: var(--font-serif);
+    }
+
+    .step-number span {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: #94A3B8;
+      letter-spacing: 1px;
+    }
+
+    .step-body {
+      padding: 1.5rem 2rem;
+      flex: 1;
+    }
+
+    .step-body h4 {
+      font-size: 1.15rem;
+      color: var(--primary-navy);
+      margin-bottom: 0.5rem;
+    }
+
+    .step-body p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .code-snippet {
+      background: #0F172A;
+      color: #38BDF8;
+      padding: 0.6rem 1rem;
+      border-radius: 4px;
+      font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+      font-size: 0.88rem;
+      display: inline-block;
+      margin-top: 0.25rem;
+    }
+
+    /* Private Repo Callout */
+    .private-eval-box {
+      background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+      border: 1px solid #93C5FD;
+      border-left: 6px solid #2563EB;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .private-eval-box h3 {
+      color: #1E40AF;
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--primary-navy);
+      color: #94A3B8;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+    }
+
+    footer strong {
+      color: #ffffff;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+      h1.report-title {
+        font-size: 2rem;
+      }
+      .step-item {
+        flex-direction: column;
+      }
+      .step-number {
+        padding: 0.75rem;
+        flex-direction: row;
+        gap: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="header-badge">McKinsey-Style Strategic Architecture Report</div>
+      <h1 class="report-title">法脉 LexTrace (ob-legalpaperwriting)</h1>
+      <p class="report-subtitle">新一代法学内生化知识中枢与智能学术研究工作台 —— 交付评估、小白极速装配方案与私有仓库云端集成可行性报告</p>
+      
+      <div class="meta-bar">
+        <div class="meta-item">报告编制：<strong>法脉项目组 · 学术科技咨询部</strong></div>
+        <div class="meta-item">评估对象：<strong>法学论文与知识库系统 (v2.0)</strong></div>
+        <div class="meta-item">仓库属性：<strong>GitHub Private 专属私有归档</strong></div>
+        <div class="meta-item">合规标准：<strong>合理转化性使用 / 100% 离线隐私保护</strong></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- KPI Metrics Section -->
+    <section class="kpi-section">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-number">538+</div>
+          <div class="kpi-label">已收录核心文献阅读卡</div>
+          <div class="kpi-sub">覆盖 CLSCI 16 大核心期刊</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-number">7 大</div>
+          <div class="kpi-label">部门法与知产研究领域</div>
+          <div class="kpi-sub">著作权 / 商标 / 专利 / 数据法</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-number">4 款</div>
+          <div class="kpi-label">Obsidian 官方插件预装</div>
+          <div class="kpi-sub">Dataview · PDF++ · 导图 · 批注</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-number">0 门槛</div>
+          <div class="kpi-label">小白专属开箱即用</div>
+          <div class="kpi-sub">&lt; 3 分钟一键自愈安装与启动</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Executive Summary Section -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">执行摘要：传统研究困局与闭环突破</h2>
+        <span class="section-en">Executive Summary</span>
+      </div>
+
+      <div class="comparison-grid">
+        <div class="card card-problem">
+          <h3 class="card-title">传统法学研究的三大结构性瓶颈</h3>
+          <ul>
+            <li><strong>知网摄入效率割裂：</strong>手工检索下载繁琐，引注卷期号、起止页码、DOI 经常残缺遗漏。</li>
+            <li><strong>笔记与原版 PDF 视窗断层：</strong>笔记记在文档里，复核原文论证时需重复检索几十页长文。</li>
+            <li><strong>通用 AI 辅助的“伪学术幻觉”：</strong>缺乏法学专业知识库切片，编造非真实的学说观点与页码。</li>
+          </ul>
+        </div>
+
+        <div class="card card-solution">
+          <h3 class="card-title">法脉 LexTrace 的闭环破局方案</h3>
+          <ul>
+            <li><strong>CNKI 双模全量自动化采集：</strong>免重复登录，EndNote 官方元数据高精度提取与结构化导出。</li>
+            <li><strong>PDF++ 原生分屏双向穿透：</strong>文献卡双击精准跳转原版高亮，显式页码标柱严防伪证。</li>
+            <li><strong>学说脉络对比与内生化工作台：</strong>忠实提取问题的提出、理论分析与方案，支持本地安全大模型。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- MECE Architecture Section -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">MECE 系统全景架构矩阵</h2>
+        <span class="section-en">System Architecture</span>
+      </div>
+
+      <table class="mece-table">
+        <thead>
+          <tr>
+            <th style="width: 18%;">层次维度</th>
+            <th style="width: 24%;">核心组件与模块</th>
+            <th style="width: 23%;">技术底层栈</th>
+            <th>学术研究业务赋能</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="layer-badge">Layer 4: 展现层</span></td>
+            <td><strong>Web AI 研究工作台</strong><br><code>local_bridge/</code> & Next.js</td>
+            <td>Next.js 15 + Python Bridge + TailwindCSS</td>
+            <td>提供极速文献检索、学者学说脉络图谱对比、答辩辩论助手及本地化大模型 API 接口。</td>
+          </tr>
+          <tr>
+            <td><span class="layer-badge">Layer 3: 沉淀层</span></td>
+            <td><strong>Obsidian 视窗联动中枢</strong><br><code>vault/.obsidian/</code></td>
+            <td>PDF++ · Dataview · Mindmap · Annotator</td>
+            <td>原版 PDF 与笔记并排展示，支持在原版划线高亮并一键回写卡片，零外部依赖。</td>
+          </tr>
+          <tr>
+            <td><span class="layer-badge">Layer 2: 资产层</span></td>
+            <td><strong>内生化法学知识库</strong><br><code>vault/知识产权/</code></td>
+            <td>538+ 篇文献阅读卡 + 导师学说图谱</td>
+            <td>涵盖王迁、崔国斌、蒋舸等权威学者专著解读，7 大部门法知识脉络与 2026 最新司法解释。</td>
+          </tr>
+          <tr>
+            <td><span class="layer-badge">Layer 1: 摄入层</span></td>
+            <td><strong>知网学术双模采集器</strong><br><code>cnki_crawler/</code></td>
+            <td>Selenium + PyMuPDF + EndNote API</td>
+            <td>自动作者全量/CLSCI 核心期刊抓取，自动提取并生成带有 <code>[[PDF_PAGE:n]]</code> 的标柱文本。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Novice Quickstart Guide -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">零代码基础学者：3 分钟极速装配路线图</h2>
+        <span class="section-en">Novice Turnkey Guide</span>
+      </div>
+
+      <div class="step-timeline">
+        <div class="step-item">
+          <div class="step-number">01<span>STEP</span></div>
+          <div class="step-body">
+            <h4>获取私有仓库代码至本机</h4>
+            <p>通过 Git 克隆或直接在 GitHub 私有仓库页面点击“Code ➔ Download ZIP”下载解压到本机。</p>
+            <div class="code-snippet">git clone https://github.com/endangered-xiezhi/ob-legalpaperwriting.git</div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">02<span>STEP</span></div>
+          <div class="step-body">
+            <h4>运行小白专属一键启动脚本（全自动装配）</h4>
+            <p>macOS 用户在访达中<strong>鼠标双击</strong>项目根目录下的 <code>一键安装与启动_小白专属.command</code>。脚本会自动检测 Python 与 Node.js 环境，缺失时自动调用极速安装程序，并使用国内镜像源安装依赖。启动成功后自动为您在浏览器中打开工作台。</p>
+            <div class="code-snippet">双击运行: 一键安装与启动_小白专属.command (或终端运行 ./install_dependencies.sh)</div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-number">03<span>STEP</span></div>
+          <div class="step-body">
+            <h4>在 Obsidian 中无感打开知识库</h4>
+            <p>下载安装 Obsidian 官方客户端，点击“打开本地文件夹作为仓库 (Open folder as vault)”，选中本项目中的 <code>vault/</code> 文件夹即可。所有 4 款插件、中文界面、PDF++ 视窗联动均已预置并开启，无需做任何手动配置！</p>
+            <div class="code-snippet">打开路径: ob-legalpaperwriting/vault/ ➔ 点击 00_知识产权研究导航.md</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Private Repo Feasibility Assessment -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">私有仓库（Private Repo）云端托管与集成可行性研判</h2>
+        <span class="section-en">Private Cloud Feasibility</span>
+      </div>
+
+      <div class="private-eval-box">
+        <h3>💡 关键研判结论：完全支持，且隐私与安全等级显著提升！</h3>
+        <p>将本项目设为 GitHub 私有仓库（Private）后，<strong>所有主流免费云服务（Vercel, Cloudflare, GitHub Actions, Codespaces）对私有仓库均提供 100% 原生支持</strong>。您的个人学术资产、论文大纲与核心代码对公众完全不可见，同时享有全自动化部署与云端算力！</p>
+      </div>
+
+      <table class="mece-table">
+        <thead>
+          <tr>
+            <th>云端平台 / 工具</th>
+            <th>免费支持政策</th>
+            <th>私有仓库集成机制</th>
+            <th>适用场景与推荐度</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Vercel 云端部署</strong></td>
+            <td>永久免费 (Hobby Plan)</td>
+            <td>使用 GitHub 账号登录后直接 Import 私有仓库，通过 OAuth 安全拉取构建，源码完全保密，自动获得免费域名与全球 CDN。</td>
+            <td><strong style="color: var(--success-green);">强烈推荐 (★★★★★)</strong><br>用于部署 Web 端研究工作台供随时在线访问。</td>
+          </tr>
+          <tr>
+            <td><strong>GitHub Actions</strong></td>
+            <td>每月 2,000 分钟免费运行</td>
+            <td>私有仓库自带每月 2,000 分钟免费 CI/CD 虚拟机构建额度，可用于定时抓取知网最新论文或自动化论文卡校验。</td>
+            <td><strong style="color: var(--success-green);">极力推荐 (★★★★★)</strong><br>全自动学术爬虫与数据定时更新。</td>
+          </tr>
+          <tr>
+            <td><strong>GitHub Codespaces</strong></td>
+            <td>每月 60 小时免费</td>
+            <td>在没有随身携带电脑时，直接在 iPad 或网页浏览器中一键打开私有仓库的 VS Code 云端环境，随时编写研究卡。</td>
+            <td><strong style="color: var(--blue-tag);">推荐 (★★★★☆)</strong><br>移动办公与跨设备学术研究。</td>
+          </tr>
+          <tr>
+            <td><strong>精细化协作者管理</strong></td>
+            <td>完全免费且无名额限制</td>
+            <td>在 Settings ➔ Collaborators 中可精准添加特定导师或同门账号赋予读写权限，有效防止未发表观点外泄。</td>
+            <td><strong style="color: var(--success-green);">必备安全策略 (★★★★★)</strong><br>课题组内部安全协同。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <p><strong>法脉 LexTrace (ob-legalpaperwriting)</strong> · 麦肯锡式学术资产与架构评估报告</p>
+      <p style="margin-top: 0.5rem; font-size: 0.8rem;">严格遵循我国《著作权法》第二十四条转化性合理使用原则 · 100% 离线计算与隐私保护</p>
+    </div>
+  </footer>
+
+</body>
+</html>

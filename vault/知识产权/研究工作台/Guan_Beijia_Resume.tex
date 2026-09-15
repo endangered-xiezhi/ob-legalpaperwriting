@@ -1,0 +1,141 @@
+%-------------------------------------------------------------------------------
+% Resume in LaTeX - Beijia Guan (管贝嘉)
+% Single-Page Professional Resume (Standard Minimal Dependencies)
+% Compatible with BasicTeX, TeX Live, MacTeX, and Overleaf
+% Compiler: pdflatex or xelatex
+%-------------------------------------------------------------------------------
+
+\documentclass[9.5pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[left=0.45in,top=0.38in,right=0.45in,bottom=0.38in]{geometry}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+% Clean up page numbers & headers
+\pagestyle{empty}
+\raggedbottom
+\raggedright
+\linespread{0.97}
+
+% Define section styling
+\newcommand{\resumesection}[1]{%
+  \vspace{3pt}%
+  {\normalsize\textbf{\textsc{#1}}}%
+  \vspace{1pt}%
+  \hrule height 0.4pt%
+  \vspace{2pt}%
+}
+
+% Custom list environment for tight spacing without external packages
+\newenvironment{resumelist}{%
+  \begin{list}{\raisebox{0.2ex}{\tiny$\bullet$}}{%
+    \setlength{\leftmargin}{11pt}%
+    \setlength{\rightmargin}{0pt}%
+    \setlength{\labelwidth}{7pt}%
+    \setlength{\labelsep}{4pt}%
+    \setlength{\itemsep}{0.8pt}%
+    \setlength{\parsep}{0pt}%
+    \setlength{\topsep}{0.8pt}%
+    \setlength{\partopsep}{0pt}%
+  }%
+}{%
+  \end{list}%
+  \vspace{0pt}%
+}
+
+% Custom formatting macros using tabularx to prevent text overflow
+\newcommand{\resumeSubheading}[4]{%
+  \noindent\begin{tabularx}{\textwidth}{@{}X r@{}}%
+    \textbf{#1} & \textbf{\footnotesize #2} \\%
+    \textit{\footnotesize #3} & \textit{\footnotesize #4} \\%
+  \end{tabularx}%
+  \vspace{-3pt}%
+}
+
+\newcommand{\resumeProjectHeading}[2]{%
+  \noindent\begin{tabularx}{\textwidth}{@{}X r@{}}%
+    #1 & \textbf{\footnotesize #2} \\%
+  \end{tabularx}%
+  \vspace{-3pt}%
+}
+
+\begin{document}
+
+%----------HEADER----------
+\begin{center}
+  {\LARGE \textbf{Beijia Guan}} \\[2pt]
+  \footnotesize Shanghai, China \ $\cdot$ \ (+86) 1xx-xxxx-xxxx \ $\cdot$ \ \href{mailto:beijiaguan@fudan.edu.cn}{beijiaguan@fudan.edu.cn} \ $\cdot$ \ \href{https://linkedin.com/in/}{LinkedIn / Portfolio}
+\end{center}
+\vspace{-8pt}
+
+%-----------EDUCATION-----------
+\resumesection{Education}
+\resumeSubheading{Fudan University}{Shanghai, China}{LL.B. in Law (Honors Degree Program)}{Sep. 2023 -- Jul. 2027 (Expected)}
+\begin{resumelist}
+  \item \textbf{GPA:} 3.96 / 4.0 \ $\vert$ \ \textbf{Rank:} 1 / 118 (Ranked 1st for 3 consecutive academic years, 2023--2026)
+  \item \textbf{Honors \& Awards:} National Scholarship (2024--2025, top 0.2\% nationally); Shanghai Municipal Scholarship (2023--2024); Fudan University Merit Student; Outstanding Communist Youth League Member
+  \item \textbf{English Proficiency:} CET-4: 644 \ $\vert$ \ CET-6: 646 (High distinction; full professional proficiency)
+  \item \textbf{Key Coursework:} Civil Law I (A), Civil Law II (Honors, A), Commercial Law (Honors, A), Corporate Law (A), Intellectual Property Law (A)
+\end{resumelist}
+
+%-----------RESEARCH & PROJECTS-----------
+\resumesection{Academic Research \& Legal AI Projects}
+
+\resumeProjectHeading{\textbf{Remedies for Personal Data Infringement Damages in the Digital Era} $\vert$ \textit{Lead Researcher}}{Dec. 2024 -- Mar. 2025}
+\begin{resumelist}
+  \item Conducted Python-based empirical analysis across 1,294 civil judgments under Prof. Bingbin Lu (National Undergraduate Innovation \& Entrepreneurship Project; Fudan Chun-Tsung Scholar, rated \textbf{Outstanding}).
+  \item Identified systemic barriers in harm quantification and nominal statutory awards; formulated a two-tier compensation framework balancing stakeholder interests (``Statutory Minimum Floor + Statutory Capped Ceiling'').
+\end{resumelist}
+
+\resumeProjectHeading{\textbf{Anti-Suit Injunctions (ASIs) in China's Standard Essential Patent (SEP) Disputes} $\vert$ \textit{Author}}{Apr. 2026}
+\begin{resumelist}
+  \item Analyzed Chinese and cross-border SEP litigation cases; proposed a ``Two-Tier Substantive Scrutiny + Strategic Response'' analytic doctrine; won \textbf{3rd Prize} at the 1st Yangtze River Delta Law Schools Academic Paper Competition.
+\end{resumelist}
+
+\resumeProjectHeading{\textbf{San Hui $\cdot$ Zhi Li: Multimodal AI Pre-IPO Compliance System} $\vert$ \textit{Project Lead}}{Mar. 2026 -- Jul. 2026}
+\begin{resumelist}
+  \item Directed the architecture of an AI compliance platform for corporate governance (``San Hui'') during restructuring and pre-IPO stages; iterated web and Feishu Bitable versions integrating RAG legal retrieval, risk detection, and automated document synthesis.
+  \item Won \textbf{3rd Prize (Eastern China)} in the Legal AI Track at the 2026 Tencent Kaiwu Global AI Competition.
+\end{resumelist}
+
+\resumeProjectHeading{\textbf{LEGAL WORLD: Multi-Agent Simulation System for Civil Litigation} $\vert$ \textit{Core Contributor}}{Jun. 2026 -- Present}
+\begin{resumelist}
+  \item Assisted Fudan DISC Lab on a key AI research grant from the Shanghai Municipal Commission of Economy and Information Technology (Grant No. 2025-GZL-RGZN-BTBX02028).
+  \item Benchmarked statutory civil trial workflows; engineered agent skills for generating complaints, defense statements, and judicial rulings, ensuring high procedural fidelity and legal accuracy.
+\end{resumelist}
+
+%-----------MOOT COURT-----------
+\resumesection{Moot Court \& Dispute Resolution}
+\resumeProjectHeading{\textbf{5th ``KWM Zhizhuo Cup'' National Campus IP Moot Court} $\vert$ \textit{Oralist \& Team Member}}{Jan. 2026 -- Jun. 2026}
+\begin{resumelist}
+  \item \textbf{National Champion}; drafted comprehensive legal memoranda on cutting-edge disputes including mobile app store exclusion, traffic diversion, cloud video streaming copyright, and cross-app automated purchasing.
+  \item Argued core contentious legal questions in oral pleadings (mandatory delisting, installation risk alerts, automated contract formation); clinched 1st place nationwide.
+\end{resumelist}
+
+%-----------PROFESSIONAL EXPERIENCE-----------
+\resumesection{Professional Experience}
+
+\resumeSubheading{Agora, Inc. (Shanghai Agora Information Technology Co., Ltd.)}{Shanghai, China}{Security and Compliance Intern}{Jun. 2025 -- Nov. 2025}
+\begin{resumelist}
+  \item \textbf{Regulatory Research \& Compliance Guides:} Researched data protection laws across 13 jurisdictions (Southeast Asia, Middle East); drafted multi-jurisdiction compliance manuals and weekly regulatory enforcement briefings tracking global privacy sanctions; analyzed compliance obligations under China's Cybersecurity Law and emerging AI regulations.
+  \item \textbf{Policy Drafting \& Audit Support:} Drafted subsidiary privacy policies and enterprise AI acceptable use policies; supported cross-functional teams in external audits, minuting and cataloging control samples for ISO 27001, MLPS 2.0, and SOX compliance.
+\end{resumelist}
+
+\resumeSubheading{Haiwen \& Partners (Shanghai Office)}{Shanghai, China}{Capital Markets Intern}{Jan. 2026 -- Jun. 2026}
+\begin{resumelist}
+  \item \textbf{Legal Due Diligence \& Work Reports:} Assisted in NEEQ listings, ChiNext IPO filings, A-share private placements, and periodic disclosures; liaised with corporate clients to collect verification materials, updated 10 chapters of Lawyers' Work Reports (IP assets, regulatory compliance, real property titles), and indexed working papers.
+  \item \textbf{Advisory \& Governance Drafting:} Conducted statutory research and telephone consultations on financing compliance issues; prepared and updated corporate governance (``San Hui'') documents for 5 listed/NEEQ companies and amended 7 sets of internal bylaws per CSRC updates.
+\end{resumelist}
+
+%-----------AWARDS & SKILLS-----------
+\resumesection{Awards, Technical Projects \& Skills}
+\begin{resumelist}
+  \item \textbf{Honors \& Competitions:} 1st Prize, 19th Shanghai ``Challenge Cup'' Competition; 1st Prize, Fudan University Zhuoyue Cup; 3rd Prize, FLTRP National Reading Contest (Campus Level); Excellence Award, 2nd Shanghai Industry Analysis Competition.
+  \item \textbf{Legal-Tech Infrastructure:} Built an automated Python scraper indexing 500+ CNKI IP papers; integrated with Codex and Obsidian to construct a structured IP jurisprudence database for thematic clustering and 5-year academic trend forecasting.
+  \item \textbf{Skills \& Languages:} Python (Empirical legal research, web scraping), LaTeX, Obsidian, Feishu Bitable; Mandarin Chinese (Native), English (CET-4: 644, CET-6: 646; Full Professional Working Proficiency).
+\end{resumelist}
+
+\end{document}

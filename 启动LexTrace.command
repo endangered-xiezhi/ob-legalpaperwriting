@@ -3,6 +3,15 @@
 set -u
 unsetopt BG_NICE 2>/dev/null || true
 
+# 自动补全 macOS 环境变量路径
+export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$HOME/.nvm/current/bin:$PATH"
+if [ -d "$HOME/.nvm/versions/node" ]; then
+  latest_nvm_node=$(ls -1d "$HOME/.nvm/versions/node/"* 2>/dev/null | tail -n 1)
+  if [ -n "$latest_nvm_node" ]; then
+    export PATH="$latest_nvm_node/bin:$PATH"
+  fi
+fi
+
 lextrace_root="${0:A:h}"
 lextrace_runtime="$lextrace_root/local_bridge/runtime"
 lextrace_lock="$lextrace_runtime/launcher.lock"
