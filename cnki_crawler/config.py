@@ -79,16 +79,25 @@ USER_DATA_DIR = os.path.join(BASE_DIR, "cnki_chrome_data")
 EXTRACT_PAGINATED_TXT = True
 
 # ==============================================================================
-# 3. Obsidian 联动配置 (可选)
+# 3. Obsidian 联动配置 (默认开启)
 # ==============================================================================
-# 是否自动在 Obsidian 中创建待审核笔记样板（如果不需要，设为 False 即可）
-AUTO_CREATE_OBSIDIAN_STUB = os.environ.get("CNKI_CREATE_OBSIDIAN", "false").lower() in ("true", "1", "yes")
+# 是否自动在 Obsidian 中创建待审核笔记样板（默认开启）
+AUTO_CREATE_OBSIDIAN_STUB = os.environ.get("CNKI_CREATE_OBSIDIAN", "true").lower() in ("true", "1", "yes")
 
-# Obsidian 仓库路径（仅当 AUTO_CREATE_OBSIDIAN_STUB 为 True 时生效）
-OBSIDIAN_VAULT_ROOT = os.environ.get(
-    "CNKI_OBSIDIAN_VAULT",
-    os.environ.get("LEXTRACE_OBSIDIAN_VAULT", "" + os.path.abspath(os.path.join(BASE_DIR, "..", "vault")) + ""),
-)
+# Obsidian 仓库路径（智能探测：环境变量 -> 项目 vault -> 用户 Downloads/Obsidian Vault）
+def _detect_vault_root() -> str:
+    env_v = os.environ.get("CNKI_OBSIDIAN_VAULT") or os.environ.get("LEXTRACE_OBSIDIAN_VAULT")
+    if env_v and os.path.exists(os.path.join(os.path.expanduser(env_v), "知识产权")):
+        return str(os.path.abspath(os.path.expanduser(env_v)))
+    project_v = os.path.abspath(os.path.join(BASE_DIR, "..", "vault"))
+    if os.path.exists(os.path.join(project_v, "知识产权")):
+        return project_v
+    user_v = os.path.expanduser("~/Downloads/Obsidian Vault")
+    if os.path.exists(os.path.join(user_v, "知识产权")):
+        return str(user_v)
+    return project_v
+
+OBSIDIAN_VAULT_ROOT = _detect_vault_root()
 PAPER_STUB_DIR = os.path.join(OBSIDIAN_VAULT_ROOT, "知识产权", "论文库")
 
 # ==============================================================================

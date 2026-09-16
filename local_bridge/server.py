@@ -325,7 +325,77 @@ def note_record(path: Path) -> dict[str, Any]:
     }
 
 
+_last_metadata_sync_time = 0.0
+
+
+def sync_crawler_metadata_stubs() -> int:
+    """自动扫描各爬虫元数据目录，将尚未生成 Obsidian 笔记的文献自动转换为样板笔记，并保持双仓库同步。"""
+    try:
+        sys.path.insert(0, str(CRAWLER_ROOT))
+        import intake_pipeline  # type: ignore
+    except Exception as exc:
+        return 0
+
+    candidate_metadata_dirs = [
+        CRAWLER_ROOT / "metadata",
+        PROJECT_ROOT / "cnki_crawler" / "metadata",
+        Path("/Users/kansang/Documents/Codex/2026-08-08/h/cnki_crawler/metadata"),
+        Path("/Users/kansang/Downloads/claude 使用专用/cnki_crawler/metadata"),
+    ]
+
+    target_vault_dirs = [
+        KNOWLEDGE_ROOT / "论文库",
+    ]
+    user_vault_paper = (Path.home() / "Downloads" / "Obsidian Vault" / "知识产权" / "论文库").resolve()
+    if user_vault_paper.exists() and user_vault_paper != (KNOWLEDGE_ROOT / "论文库").resolve():
+        target_vault_dirs.append(user_vault_paper)
+    project_vault_paper = (PROJECT_ROOT / "vault" / "知识产权" / "论文库").resolve()
+    if project_vault_paper.exists() and project_vault_paper != (KNOWLEDGE_ROOT / "论文库").resolve():
+        target_vault_dirs.append(project_vault_paper)
+
+    synced_count = 0
+    seen_files: set[str] = set()
+    for meta_dir in candidate_metadata_dirs:
+        if not meta_dir.exists():
+            continue
+        try:
+            json_files = list(meta_dir.glob("*.json"))
+        except OSError:
+            continue
+        for json_path in json_files:
+            if json_path.name in seen_files:
+                continue
+            seen_files.add(json_path.name)
+            try:
+                data = json.loads(json_path.read_text(encoding="utf-8", errors="replace"))
+                if not data.get("title"):
+                    continue
+                merged = intake_pipeline.merge_metadata(data)
+                for target_dir in target_vault_dirs:
+                    target_dir.mkdir(parents=True, exist_ok=True)
+                    existing = intake_pipeline.find_existing_stub(target_dir, merged)
+                    if not existing:
+                        stub_path, created = intake_pipeline.upsert_obsidian_stub(data, target_dir)
+                        if created:
+                            synced_count += 1
+            except Exception:
+                continue
+    if synced_count > 0:
+        print(f"[LexTrace] 自动同步：已将 {synced_count} 篇新抓取知网文献转写为 Obsidian 样板卡片。")
+    return synced_count
+
+
+def ensure_crawler_stubs_synced() -> int:
+    global _last_metadata_sync_time
+    now = datetime.now().timestamp()
+    if now - _last_metadata_sync_time < 3.0:
+        return 0
+    _last_metadata_sync_time = now
+    return sync_crawler_metadata_stubs()
+
+
 def scan_vault() -> list[dict[str, Any]]:
+    ensure_crawler_stubs_synced()
     records = []
     for path in markdown_paths():
         try:
@@ -615,6 +685,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 self._json({"ok": True, **schema})
             elif parsed.path == "/api/vault/note":
                 self._json(note_payload(query.get("path", [""])[0]))
+            elif parsed.path == "/api/intake/sync":
+                count = sync_crawler_metadata_stubs()
+                self._json({"ok": True, "synced": count})
             else:
                 self._json({"error": "not found"}, 404)
         except ValueError as exc:
@@ -675,12 +748,16 @@ class BridgeHandler(BaseHTTPRequestHandler):
         if not downloader.exists():
             self._json({"error": f"未找到爬虫：{downloader}"}, 404)
             return
+        mode = clean_short_text(payload.get("mode"), maximum=30) or "journal"
+        author = clean_short_text(payload.get("author"), maximum=100)
         journals = clean_journals(payload.get("journals"))
-        if not journals:
+        if mode != "author" and not journals:
             raise ValueError("至少启用一种期刊")
         RUNTIME_ROOT.mkdir(parents=True, exist_ok=True)
         selection_path = RUNTIME_ROOT / "cnki_selection.json"
         selection_path.write_text(json.dumps({
+            "mode": mode,
+            "author": author,
             "journals": journals,
             "strictJournal": bool(payload.get("strictJournal", True)),
             "profile": {
@@ -708,13 +785,15 @@ class BridgeHandler(BaseHTTPRequestHandler):
             subprocess.Popen(["open", "-a", "Terminal", str(launch_file)])
         else:
             subprocess.Popen(command, cwd=str(PROJECT_ROOT))
+        msg = f"已启动作者检索模式（作者：{author}）" if mode == "author" else f"已启动知网爬虫（{len(journals)} 种期刊）；采集后会自动同步至 Obsidian 待审核样板。"
         self._json({
             "ok": True,
-            "message": f"已启动升级后的爬虫并传入 {len(journals)} 种期刊；采集后会创建Obsidian待审核样板。",
+            "message": msg,
         })
 
 
 def main() -> None:
+    sync_crawler_metadata_stubs()
     server = ThreadingHTTPServer((HOST, PORT), BridgeHandler)
     print(f"LexTrace 本机桥接：http://{HOST}:{PORT}")
     print(f"Obsidian 数据源：{KNOWLEDGE_ROOT}")
