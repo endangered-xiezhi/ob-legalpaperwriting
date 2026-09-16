@@ -76,3 +76,500 @@ button,input,textarea{font:inherit}button{color:inherit}.obsidian-app{min-height
 .citation-search-filter{margin-bottom:10px}
 .citation-search-filter input{width:100%;border:1px solid var(--line);border-radius:8px;background:#fbfaf7;padding:9px 12px;outline:0;font-size:11px}
 
+
+/* ==============================================================================
+   五号字排版基准 (Min 14px / 10.5pt) 与舒适学术行间距优化
+   ============================================================================== */
+body {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.eyebrow {
+  font-size: 11px !important;
+}
+
+.brand strong {
+  font-size: 21px !important;
+}
+.brand small {
+  font-size: 11px !important;
+}
+.vault-chip strong {
+  font-size: 13px !important;
+}
+.vault-chip small {
+  font-size: 11px !important;
+}
+
+.sidebar nav button strong {
+  font-size: 14px !important;
+}
+.sidebar nav button small {
+  font-size: 11px !important;
+}
+.sidebar-bottom button {
+  font-size: 13px !important;
+}
+
+.topbar-title h2 {
+  margin: 0;
+  font-size: 20px;
+  font-family: Georgia, "Songti SC", serif;
+  font-weight: 500;
+  color: var(--ink);
+}
+.topbar-caption {
+  font-size: 12px;
+  color: var(--muted);
+}
+.top-actions button {
+  font-size: 13px !important;
+}
+
+.welcome-copy p {
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+}
+.primary-button, .quiet-button {
+  font-size: 13px !important;
+  padding: 10px 18px !important;
+}
+
+.stat-card span {
+  font-size: 13px !important;
+}
+.stat-card small {
+  font-size: 11px !important;
+}
+
+.route-card strong {
+  font-size: 20px !important;
+}
+.route-card small {
+  font-size: 13px !important;
+}
+.route-enter {
+  font-size: 12px !important;
+}
+
+.domain-card strong {
+  font-size: 18px !important;
+}
+.domain-card p {
+  font-size: 12px !important;
+  line-height: 1.7 !important;
+}
+.domain-card em {
+  font-size: 11px !important;
+}
+
+.note-table-head {
+  font-size: 12px !important;
+}
+.note-row {
+  font-size: 14px !important;
+  min-height: 80px !important;
+  padding: 12px 14px !important;
+}
+.note-title strong {
+  font-size: 15px !important;
+}
+.note-title small, .note-row > span small {
+  font-size: 12px !important;
+}
+.note-row i {
+  font-size: 11px !important;
+}
+.row-actions button {
+  font-size: 11px !important;
+  padding: 6px 10px !important;
+}
+
+.topic-card h3 {
+  font-size: 22px !important;
+}
+.topic-card p {
+  font-size: 13px !important;
+  line-height: 1.75 !important;
+}
+.topic-actions button {
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+}
+
+/* 分页器样式 */
+.pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 8px 10px;
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pagination-controls button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  padding: 7px 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all .15s ease;
+}
+.pagination-controls button:hover:not(:disabled) {
+  background: var(--purple-soft);
+  border-color: #b7a1d4;
+  color: var(--purple);
+}
+.pagination-controls button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+.current-page-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  background: var(--purple);
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* 检索式记录样式 */
+.saved-queries-list {
+  margin-top: 18px;
+  display: grid;
+  gap: 8px;
+}
+.saved-query-card {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fbfaf7;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.saved-query-card:hover {
+  background: #fff;
+  border-color: #9f83c6;
+  transform: translateY(-1px);
+}
+.saved-query-content strong {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+}
+.saved-query-content small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.saved-query-btn {
+  border: 0;
+  background: transparent;
+  color: #a0472e;
+  cursor: pointer;
+  padding: 6px;
+  font-size: 12px;
+}
+
+/* 检索双模卡片 */
+.spider-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.mode-card {
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px;
+  cursor: pointer;
+  transition: all .18s ease;
+  text-align: left;
+}
+.mode-card.active {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+  box-shadow: 0 4px 14px rgba(25,75,70,.1);
+}
+.mode-card h4 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--ink);
+}
+.mode-card p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.mode-cli-box {
+  background: #192523;
+  color: #8be0be;
+  border-radius: 9px;
+  padding: 12px 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  margin-top: 14px;
+  overflow-x: auto;
+}
+
+/* Agent Prompt 清单与 SOP 板块 */
+.sop-banner {
+  background: linear-gradient(135deg, #fbf7ee 0%, #f4ecdc 100%);
+  border: 1px solid #dcd1be;
+  border-left: 5px solid var(--orange);
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+}
+.sop-banner h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-family: Georgia, "Songti SC", serif;
+  color: var(--ink);
+}
+.sop-banner p {
+  margin: 0;
+  font-size: 13px;
+  color: #55524b;
+  line-height: 1.7;
+}
+.sop-rules {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+.sop-rule-item {
+  background: rgba(255,255,255,.7);
+  border: 1px solid #e1d7c6;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.sop-rule-item strong {
+  display: block;
+  font-size: 13px;
+  color: var(--orange);
+}
+.sop-rule-item small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6a6459;
+  line-height: 1.5;
+}
+
+.prompt-grid {
+  display: grid;
+  gap: 16px;
+  margin: 20px 0;
+}
+.prompt-card {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--card);
+  padding: 20px;
+}
+.prompt-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.prompt-card-header h4 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prompt-content-box {
+  background: #f7f5ef;
+  border: 1px solid #e5e0d3;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: #2b3330;
+  white-space: pre-wrap;
+}
+
+/* API 接入面板 */
+.api-workbench-card {
+  border: 1px solid #c9bbdc;
+  border-radius: 14px;
+  background: #fbf9fe;
+  padding: 22px;
+  margin-top: 24px;
+}
+.api-workbench-card h3 {
+  margin: 0 0 8px;
+  font-size: 19px;
+  font-family: Georgia, "Songti SC", serif;
+  color: var(--purple);
+}
+.api-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin: 14px 0;
+}
+.api-form-grid label {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 650;
+  color: #4b3e5e;
+}
+.api-form-grid input, .api-form-grid select {
+  border: 1px solid #cfc1e2;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #fff;
+  font-size: 13px;
+  outline: 0;
+}
+
+/* 阅读历史与 Fork 记录 */
+.history-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.history-filter-tabs {
+  display: flex;
+  gap: 8px;
+}
+.history-filter-tabs button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.history-filter-tabs button.active {
+  background: var(--purple);
+  color: #fff;
+  border-color: var(--purple);
+  font-weight: 650;
+}
+.history-grid {
+  display: grid;
+  gap: 10px;
+}
+.history-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform .15s ease;
+}
+.history-card:hover {
+  transform: translateY(-1px);
+  border-color: #a48cc7;
+}
+.history-main h4 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--ink);
+}
+.history-main p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.history-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.fork-badge {
+  background: #fff4e5;
+  color: var(--orange);
+  border: 1px solid #ffd8a8;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* 知产法规与案例库专属样式 */
+.rulebook-banner {
+  background: linear-gradient(135deg, #eff7f5 0%, #dff0ec 100%);
+  border: 1px solid #b8ded5;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.rulebook-banner h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-family: Georgia, "Songti SC", serif;
+  color: var(--teal);
+}
+.rulebook-banner p {
+  margin: 0;
+  font-size: 14px;
+  color: #245751;
+  line-height: 1.7;
+}
+.rulebook-hubs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 30px;
+}
+.rulebook-hub-card {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--card);
+  padding: 20px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .18s ease;
+}
+.rulebook-hub-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--teal);
+  box-shadow: var(--shadow);
+}
+.rulebook-hub-card strong {
+  display: block;
+  font-size: 18px;
+  color: var(--teal);
+  margin-bottom: 8px;
+  font-family: Georgia, "Songti SC", serif;
+}
+.rulebook-hub-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}

@@ -34,10 +34,12 @@ test("server-renders the LexTrace Obsidian guide", async () => {
   assert.match(html, /<title>LexTrace｜Obsidian 法学研究工作台<\/title>/i);
   assert.match(html, /Obsidian Research Workbench/);
   assert.match(html, /研究导航/);
-  assert.match(html, /采集与待处理/);
-  assert.match(html, /关系工作台/);
+  assert.match(html, /知产法规与案例库/);
+  assert.match(html, /知网论文收集/);
+  assert.match(html, /现有争议专题/);
   assert.match(html, /引注中心/);
-  assert.match(html, /Agent 任务单/);
+  assert.match(html, /Agent Prompt 清单/);
+  assert.match(html, /阅读历史/);
   assert.match(html, /从采集到引注/);
   assert.match(html, /10秒自动检查/);
   assert.doesNotMatch(
