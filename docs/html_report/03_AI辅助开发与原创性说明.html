@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>03 AI辅助开发与原创性说明 —— 法脉 LexTrace 竞赛申报材料</title>
+  <style>
+    :root {
+      --primary-teal: #1a4d44;
+      --primary-teal-light: #eaf2f0;
+      --primary-teal-hover: #133a33;
+      --accent-vermilion: #a0492e;
+      --accent-vermilion-light: #fbeee9;
+      --accent-gold: #b45309;
+      --accent-gold-light: #fef3c7;
+      --bg-page: #faf8f4;
+      --bg-card: #ffffff;
+      --bg-card-muted: #f6f3eb;
+      --border-color: #ded6c8;
+      --border-light: #ebe5d9;
+      --text-main: #212826;
+      --text-muted: #5c6b66;
+      --text-sub: #788581;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Times New Roman", "SimSun", "STSong", "Songti SC", "Noto Serif SC", serif;
+      font-size: 10.5pt; /* 五号字 */
+      line-height: 1.5;  /* 1.5倍行距 */
+      color: var(--text-main);
+      background-color: var(--bg-page);
+      padding: 24px 0 60px 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .top-action-bar {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .nav-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 9pt;
+      color: var(--primary-teal);
+      text-decoration: none;
+      background: var(--primary-teal-light);
+      border-radius: 4px;
+      border: 1px solid rgba(26,77,68,0.2);
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover, .nav-pill.active {
+      background: var(--primary-teal);
+      color: #ffffff;
+    }
+
+    .btn-print {
+      background: var(--accent-vermilion);
+      color: #ffffff;
+      border: none;
+      padding: 6px 14px;
+      font-size: 9.5pt;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+    }
+
+    .btn-print:hover {
+      background: #8b3a2b;
+    }
+
+    h1.doc-main-title {
+      font-size: 16pt; /* 3号字 */
+      font-weight: bold;
+      text-align: center;
+      color: var(--primary-teal);
+      line-height: 1.4;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .doc-sub-header {
+      text-align: center;
+      font-size: 10.5pt;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--primary-teal);
+      padding-bottom: 12px;
+    }
+
+    .meta-tag-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 9pt;
+      flex-wrap: wrap;
+    }
+
+    .meta-badge {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-color);
+      padding: 2px 8px;
+      border-radius: 3px;
+      color: var(--primary-teal);
+    }
+
+    h2, h3, h4, .section-title {
+      font-size: 12pt; /* 小四号 */
+      font-weight: bold;
+      color: var(--primary-teal);
+      line-height: 1.4;
+      margin-top: 18pt;
+      margin-bottom: 8pt;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2 {
+      border-left: 4px solid var(--primary-teal);
+      padding-left: 8px;
+      background: linear-gradient(90deg, rgba(26,77,68,0.06) 0%, transparent 100%);
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    h3 {
+      border-left: 3px solid var(--accent-vermilion);
+      padding-left: 6px;
+    }
+
+    p, li, div, td, th {
+      font-size: 10.5pt; /* 五号字 */
+      line-height: 1.5;  /* 1.5倍行距 */
+    }
+
+    p {
+      margin-bottom: 8pt;
+      text-align: justify;
+      text-indent: 2em;
+    }
+
+    p.no-indent {
+      text-indent: 0;
+    }
+
+    ul, ol {
+      margin-left: 2em;
+      margin-bottom: 10pt;
+    }
+
+    li {
+      margin-bottom: 4pt;
+    }
+
+    .visual-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 14pt;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+
+    .visual-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14pt;
+    }
+
+    .visual-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14pt;
+    }
+
+    .visual-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14pt;
+    }
+
+    .metric-badge-box {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-color);
+      border-top: 3px solid var(--primary-teal);
+      border-radius: 4px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .metric-num {
+      font-size: 15pt;
+      font-weight: bold;
+      color: var(--primary-teal);
+      font-family: "Times New Roman", serif;
+    }
+
+    .metric-desc {
+      font-size: 9pt;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .flow-diagram-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      margin: 14pt 0;
+    }
+
+    .diagram-layer {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+    }
+
+    .diagram-layer.layer-4 { border-top: 3px solid var(--accent-vermilion); }
+    .diagram-layer.layer-3 { border-top: 3px solid var(--accent-gold); }
+    .diagram-layer.layer-2 { border-top: 3px solid var(--primary-teal); }
+    .diagram-layer.layer-1 { border-top: 3px solid #475569; }
+
+    .layer-title {
+      font-weight: bold;
+      font-size: 11pt;
+      color: var(--primary-teal);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .layer-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .chip {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-light);
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 9.5pt;
+    }
+
+    table.academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12pt 0 16pt 0;
+      font-size: 10pt;
+      background: #ffffff;
+    }
+
+    table.academic-table th, table.academic-table td {
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: middle;
+      line-height: 1.4;
+    }
+
+    table.academic-table thead th {
+      background-color: var(--primary-teal-light);
+      color: var(--primary-teal);
+      font-weight: bold;
+      border-top: 2px solid var(--primary-teal);
+      border-bottom: 1.5px solid var(--primary-teal);
+    }
+
+    table.academic-table tbody tr {
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    table.academic-table tbody tr:nth-child(even) {
+      background-color: #faf9f6;
+    }
+
+    table.academic-table tbody tr:last-child {
+      border-bottom: 2px solid var(--primary-teal);
+    }
+
+    .callout-box {
+      border-left: 4px solid var(--primary-teal);
+      background: var(--primary-teal-light);
+      padding: 10px 14px;
+      margin: 12pt 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 10pt;
+    }
+
+    .callout-box.alert {
+      border-left-color: var(--accent-vermilion);
+      background: var(--accent-vermilion-light);
+    }
+
+    .callout-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: var(--primary-teal);
+    }
+
+    .callout-box.alert .callout-title {
+      color: var(--accent-vermilion);
+    }
+
+    .script-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14pt 0;
+      background: #ffffff;
+    }
+
+    .script-table th {
+      background: var(--primary-teal);
+      color: #ffffff;
+      font-weight: bold;
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 10.5pt;
+    }
+
+    .script-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+      font-size: 10pt;
+      line-height: 1.5;
+    }
+
+    .script-table tr:nth-child(even) {
+      background: #fdfbf7;
+    }
+
+    .time-badge {
+      display: inline-block;
+      background: var(--accent-vermilion-light);
+      color: var(--accent-vermilion);
+      border: 1px solid var(--accent-vermilion);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 9pt;
+      font-family: "Times New Roman", serif;
+    }
+
+    .visual-cue {
+      font-size: 9.5pt;
+      color: var(--primary-teal);
+      background: var(--primary-teal-light);
+      padding: 4px 6px;
+      border-radius: 3px;
+      margin-top: 4px;
+      display: block;
+    }
+
+    .code-tree {
+      background: #212826;
+      color: #e5e7eb;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 9pt;
+      line-height: 1.4;
+      padding: 12px 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10pt 0;
+    }
+
+    .tree-folder { color: #93c5fd; font-weight: bold; }
+    .tree-file { color: #d1d5db; }
+    .tree-comment { color: #9ca3af; font-style: italic; }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 20mm 15mm 20mm 15mm;
+      }
+
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+      }
+
+      .top-action-bar, .no-print {
+        display: none !important;
+      }
+
+      .visual-card, .diagram-layer, table, .flow-diagram-container, .code-tree {
+        box-shadow: none !important;
+        border-color: #999999 !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      h2, h3 {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+
+      .page-break {
+        page-break-after: always;
+        break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    
+    <div class="top-action-bar no-print">
+      <div class="nav-pills">
+        <a href="01_智能体作品及其完整材料.html" class="nav-pill">01_材料交付</a><a href="02_系统架构与功能说明书.html" class="nav-pill">02_架构说明</a><a href="03_AI辅助开发与原创性说明.html" class="nav-pill active">03_原创说明</a><a href="04_功能展示与说明材料.html" class="nav-pill">04_功能展示</a><a href="05_数据及资料来源说明.html" class="nav-pill">05_数据来源</a><a href="06_场景应用演示视频口播脚本.html" class="nav-pill">06_视频脚本</a><a href="index.html" class="nav-pill">📑 目录总览</a>
+      </div>
+      <button class="btn-print" onclick="window.print()">
+        <span>🖨️</span> 打印为精美 PDF (A4)
+      </button>
+    </div>
+    
+
+    <div class="doc-sub-header">
+      <h1 class="doc-main-title">A. 法律实践与法学研究赛道 · AI辅助开发与原创性说明</h1>
+      <div>全国高校法学与法律科技创新大赛参赛申报材料 · 第三部分</div>
+      <div class="meta-tag-row">
+        <span class="meta-badge">研发主体：法脉智能科研团队</span>
+        <span class="meta-badge">核心算法：100% 独立自主编写</span>
+        <span class="meta-badge">开源合规：遵循 LGPL v2.1 许可协议</span>
+        <span class="meta-badge">学术诚信：严格恪守人机协作伦理边界</span>
+      </div>
+    </div>
+
+    <h2>一、团队技术积淀与既往竞赛荣誉</h2>
+    <p>法脉智能科研团队由深耕法学理论、数据挖掘与大模型 Agent 架构的青年学者与跨学科研究者组成，兼具严谨的法学专业素养与扎实的工程研发能力：</p>
+
+    <div class="visual-grid-2">
+      <div class="visual-card" style="border-left: 4px solid var(--primary-teal);">
+        <div style="font-weight: bold; color: var(--primary-teal); font-size: 11pt; margin-bottom: 4px;">
+          🏆 腾讯开悟 (Tencent Kaiwu) 算法赛事获奖
+        </div>
+        <p class="no-indent" style="font-size: 9.5pt; color: var(--text-muted);">
+          团队核心成员曾参与腾讯开悟人工智能创新大赛并斩获荣誉奖项，在复杂决策算法、状态机建模与自动化智能体调度方面积累了深厚的实战算法经验。
+        </p>
+      </div>
+
+      <div class="visual-card" style="border-left: 4px solid var(--accent-vermilion);">
+        <div style="font-weight: bold; color: var(--accent-vermilion); font-size: 11pt; margin-bottom: 4px;">
+          🌟 “星瀚杯”全国人工智能创新大赛总决赛
+        </div>
+        <p class="no-indent" style="font-size: 9.5pt; color: var(--text-muted);">
+          团队研发的“企业三会治理智能合规 Agent 系统”历经多轮专家评审，成功晋级全国总决赛，在法律文本理解、合规规则图谱构建与智能推理领域得到了权威认可。
+        </p>
+      </div>
+    </div>
+
+    <h2>二、核心成果自主原创性声明</h2>
+    <p>参赛作品《法脉 LexTrace》全套系统由团队成员独立完成需求调研、法学本体建模、前后端架构设计、爬虫算法编写及测试验证，核心原创性体现在以下四个维度：</p>
+
+    <div class="visual-grid-2">
+      <div class="visual-card">
+        <div class="callout-title" style="color: var(--primary-teal); margin-bottom: 4px;">
+          1. 自研知网定向采集与防爬解析算法
+        </div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          知网网页结构动态多变且反爬严格。团队完全自主开发了基于动态等待、会话维持与智能解密的双模爬虫主程序（<code>cnki_crawler/run_spider.py</code>），未采用任何商业爬虫黑盒工具，实现稳定可靠的高速抓取。
+        </p>
+      </div>
+
+      <div class="visual-card">
+        <div class="callout-title" style="color: var(--primary-teal); margin-bottom: 4px;">
+          2. 法学研读“五维结构化”标准与 SOP 体系
+        </div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          结合团队法学专业研究经验，首创“问题提出、学说争议、制度方案、论证链条、精确页码金句”五维研读提取标准，并将其固化为三大工业级 Prompt SOP，填补了法学研究智能体方法论空白。
+        </p>
+      </div>
+
+      <div class="visual-card">
+        <div class="callout-title" style="color: var(--primary-teal); margin-bottom: 4px;">
+          3. 争议焦点对立矩阵与作者研究路径模型
+        </div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          针对知识产权前沿争议，独立归纳 7 大争点模型，系统性提炼肯定说、否定说与折中说的立论前提与反驳要点，打破单一作者关系的浅层展示，重构法学理论的深层对抗逻辑。
+        </p>
+      </div>
+
+      <div class="visual-card">
+        <div class="callout-title" style="color: var(--primary-teal); margin-bottom: 4px;">
+          4. 独立构建的前端学术工作台与本地桥接层
+        </div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          基于 Next.js 15 从零编写响应式前端工作台，设计 15 篇黄金分页排版、微型操作胶囊（<code>.row-action-group</code>）与 Python 8765 端口桥接协议，拥有完整的自主知识产权。
+        </p>
+      </div>
+    </div>
+
+    <h2>三、AI 辅助开发边界与学术伦理声明</h2>
+    <p>团队恪守严谨的学术诚信与工程伦理规范，严禁任何形式的学术不端行为，严格界定生成式 AI 工具在研发过程中的辅助边界：</p>
+
+    <table class="academic-table">
+      <thead>
+        <tr>
+          <th>开发环节</th>
+          <th>AI 辅助使用边界说明 (Copilot / Assistant)</th>
+          <th>团队独立原创研发内容 (Human-led Originality)</th>
+          <th>原创性占比</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>业务架构与需求定义</b></td>
+          <td>无介入。完全由法学研究生根据科研实战痛点定义。</td>
+          <td>法学研究全流程闭环定义、防伪幻觉机制、争议焦点分类法。</td>
+          <td><b>100% 团队原创</b></td>
+        </tr>
+        <tr>
+          <td><b>数据爬虫与解析工程</b></td>
+          <td>仅辅助生成正则表达式边界检查的初始代码段。</td>
+          <td>知网翻页会话算法、PyMuPDF 分页标柱注入、元数据校验逻辑。</td>
+          <td><b>95% 团队原创</b></td>
+        </tr>
+        <tr>
+          <td><b>前端 UI 与样式系统</b></td>
+          <td>辅助排查 CSS 响应式媒体查询语法错误及 Tailwind 转纯 CSS 映射。</td>
+          <td>斯坦福法学评论温润宣纸排版规范、15篇分页组件、工作台交互逻辑。</td>
+          <td><b>90% 团队原创</b></td>
+        </tr>
+        <tr>
+          <td><b>法学 Prompt 工程与 SOP</b></td>
+          <td>用于多轮输出格式一致性测试的辅助打分。</td>
+          <td>三大核心法学 Prompt 的提示词架构、少样本范式（Few-shot）与证据硬约束设计。</td>
+          <td><b>100% 团队原创</b></td>
+        </tr>
+        <tr>
+          <td><b>知识库 514 篇卡片质检</b></td>
+          <td>大模型作为提取工具在 Prompt 约束下运行。</td>
+          <td>所有争议观点归纳、制度方案评价及页码核验均由法学专业人工全面复核。</td>
+          <td><b>100% 团队人工终审</b></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout-box alert">
+      <div class="callout-title">⚖️ 知识产权与开源合规承诺</div>
+      本作品严格遵守 <b>LGPL v2.1</b> 开源许可协议。系统内所有依赖项均为合规合法的开源组件（React, Next.js, PyMuPDF, Python 标准库）。团队承诺所提交的代码与文档无任何知识产权争议，未侵犯任何第三方的合法权益。
+    </div>
+
+    <div style="margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--border-color); text-align: center; font-size: 9pt; color: var(--text-sub);" class="no-print">
+      法脉 LexTrace · 驱动法学研读与学术写作的数字化跃迁 · 全国高校法学与法律科技创新大赛（赛道A）申报材料
+    </div>
+  </div>
+</body>
+</html>

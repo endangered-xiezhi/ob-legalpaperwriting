@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02 系统架构与功能说明书 —— 法脉 LexTrace 竞赛申报材料</title>
+  <style>
+    :root {
+      --primary-teal: #1a4d44;
+      --primary-teal-light: #eaf2f0;
+      --primary-teal-hover: #133a33;
+      --accent-vermilion: #a0492e;
+      --accent-vermilion-light: #fbeee9;
+      --accent-gold: #b45309;
+      --accent-gold-light: #fef3c7;
+      --bg-page: #faf8f4;
+      --bg-card: #ffffff;
+      --bg-card-muted: #f6f3eb;
+      --border-color: #ded6c8;
+      --border-light: #ebe5d9;
+      --text-main: #212826;
+      --text-muted: #5c6b66;
+      --text-sub: #788581;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Times New Roman", "SimSun", "STSong", "Songti SC", "Noto Serif SC", serif;
+      font-size: 10.5pt; /* 五号字 */
+      line-height: 1.5;  /* 1.5倍行距 */
+      color: var(--text-main);
+      background-color: var(--bg-page);
+      padding: 24px 0 60px 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .top-action-bar {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .nav-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 9pt;
+      color: var(--primary-teal);
+      text-decoration: none;
+      background: var(--primary-teal-light);
+      border-radius: 4px;
+      border: 1px solid rgba(26,77,68,0.2);
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover, .nav-pill.active {
+      background: var(--primary-teal);
+      color: #ffffff;
+    }
+
+    .btn-print {
+      background: var(--accent-vermilion);
+      color: #ffffff;
+      border: none;
+      padding: 6px 14px;
+      font-size: 9.5pt;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+    }
+
+    .btn-print:hover {
+      background: #8b3a2b;
+    }
+
+    h1.doc-main-title {
+      font-size: 16pt; /* 3号字 */
+      font-weight: bold;
+      text-align: center;
+      color: var(--primary-teal);
+      line-height: 1.4;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .doc-sub-header {
+      text-align: center;
+      font-size: 10.5pt;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--primary-teal);
+      padding-bottom: 12px;
+    }
+
+    .meta-tag-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 9pt;
+      flex-wrap: wrap;
+    }
+
+    .meta-badge {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-color);
+      padding: 2px 8px;
+      border-radius: 3px;
+      color: var(--primary-teal);
+    }
+
+    h2, h3, h4, .section-title {
+      font-size: 12pt; /* 小四号 */
+      font-weight: bold;
+      color: var(--primary-teal);
+      line-height: 1.4;
+      margin-top: 18pt;
+      margin-bottom: 8pt;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2 {
+      border-left: 4px solid var(--primary-teal);
+      padding-left: 8px;
+      background: linear-gradient(90deg, rgba(26,77,68,0.06) 0%, transparent 100%);
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    h3 {
+      border-left: 3px solid var(--accent-vermilion);
+      padding-left: 6px;
+    }
+
+    p, li, div, td, th {
+      font-size: 10.5pt; /* 五号字 */
+      line-height: 1.5;  /* 1.5倍行距 */
+    }
+
+    p {
+      margin-bottom: 8pt;
+      text-align: justify;
+      text-indent: 2em;
+    }
+
+    p.no-indent {
+      text-indent: 0;
+    }
+
+    ul, ol {
+      margin-left: 2em;
+      margin-bottom: 10pt;
+    }
+
+    li {
+      margin-bottom: 4pt;
+    }
+
+    .visual-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 14pt;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+
+    .visual-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14pt;
+    }
+
+    .visual-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14pt;
+    }
+
+    .visual-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14pt;
+    }
+
+    .metric-badge-box {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-color);
+      border-top: 3px solid var(--primary-teal);
+      border-radius: 4px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .metric-num {
+      font-size: 15pt;
+      font-weight: bold;
+      color: var(--primary-teal);
+      font-family: "Times New Roman", serif;
+    }
+
+    .metric-desc {
+      font-size: 9pt;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .flow-diagram-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      margin: 14pt 0;
+    }
+
+    .diagram-layer {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+    }
+
+    .diagram-layer.layer-4 { border-top: 3px solid var(--accent-vermilion); }
+    .diagram-layer.layer-3 { border-top: 3px solid var(--accent-gold); }
+    .diagram-layer.layer-2 { border-top: 3px solid var(--primary-teal); }
+    .diagram-layer.layer-1 { border-top: 3px solid #475569; }
+
+    .layer-title {
+      font-weight: bold;
+      font-size: 11pt;
+      color: var(--primary-teal);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .layer-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .chip {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-light);
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 9.5pt;
+    }
+
+    table.academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12pt 0 16pt 0;
+      font-size: 10pt;
+      background: #ffffff;
+    }
+
+    table.academic-table th, table.academic-table td {
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: middle;
+      line-height: 1.4;
+    }
+
+    table.academic-table thead th {
+      background-color: var(--primary-teal-light);
+      color: var(--primary-teal);
+      font-weight: bold;
+      border-top: 2px solid var(--primary-teal);
+      border-bottom: 1.5px solid var(--primary-teal);
+    }
+
+    table.academic-table tbody tr {
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    table.academic-table tbody tr:nth-child(even) {
+      background-color: #faf9f6;
+    }
+
+    table.academic-table tbody tr:last-child {
+      border-bottom: 2px solid var(--primary-teal);
+    }
+
+    .callout-box {
+      border-left: 4px solid var(--primary-teal);
+      background: var(--primary-teal-light);
+      padding: 10px 14px;
+      margin: 12pt 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 10pt;
+    }
+
+    .callout-box.alert {
+      border-left-color: var(--accent-vermilion);
+      background: var(--accent-vermilion-light);
+    }
+
+    .callout-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: var(--primary-teal);
+    }
+
+    .callout-box.alert .callout-title {
+      color: var(--accent-vermilion);
+    }
+
+    .script-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14pt 0;
+      background: #ffffff;
+    }
+
+    .script-table th {
+      background: var(--primary-teal);
+      color: #ffffff;
+      font-weight: bold;
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 10.5pt;
+    }
+
+    .script-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+      font-size: 10pt;
+      line-height: 1.5;
+    }
+
+    .script-table tr:nth-child(even) {
+      background: #fdfbf7;
+    }
+
+    .time-badge {
+      display: inline-block;
+      background: var(--accent-vermilion-light);
+      color: var(--accent-vermilion);
+      border: 1px solid var(--accent-vermilion);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 9pt;
+      font-family: "Times New Roman", serif;
+    }
+
+    .visual-cue {
+      font-size: 9.5pt;
+      color: var(--primary-teal);
+      background: var(--primary-teal-light);
+      padding: 4px 6px;
+      border-radius: 3px;
+      margin-top: 4px;
+      display: block;
+    }
+
+    .code-tree {
+      background: #212826;
+      color: #e5e7eb;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 9pt;
+      line-height: 1.4;
+      padding: 12px 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10pt 0;
+    }
+
+    .tree-folder { color: #93c5fd; font-weight: bold; }
+    .tree-file { color: #d1d5db; }
+    .tree-comment { color: #9ca3af; font-style: italic; }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 20mm 15mm 20mm 15mm;
+      }
+
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+      }
+
+      .top-action-bar, .no-print {
+        display: none !important;
+      }
+
+      .visual-card, .diagram-layer, table, .flow-diagram-container, .code-tree {
+        box-shadow: none !important;
+        border-color: #999999 !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      h2, h3 {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+
+      .page-break {
+        page-break-after: always;
+        break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    
+    <div class="top-action-bar no-print">
+      <div class="nav-pills">
+        <a href="01_智能体作品及其完整材料.html" class="nav-pill">01_材料交付</a><a href="02_系统架构与功能说明书.html" class="nav-pill active">02_架构说明</a><a href="03_AI辅助开发与原创性说明.html" class="nav-pill">03_原创说明</a><a href="04_功能展示与说明材料.html" class="nav-pill">04_功能展示</a><a href="05_数据及资料来源说明.html" class="nav-pill">05_数据来源</a><a href="06_场景应用演示视频口播脚本.html" class="nav-pill">06_视频脚本</a><a href="index.html" class="nav-pill">📑 目录总览</a>
+      </div>
+      <button class="btn-print" onclick="window.print()">
+        <span>🖨️</span> 打印为精美 PDF (A4)
+      </button>
+    </div>
+    
+
+    <div class="doc-sub-header">
+      <h1 class="doc-main-title">A. 法律实践与法学研究赛道 · 系统架构与功能说明书</h1>
+      <div>全国高校法学与法律科技创新大赛参赛申报材料 · 第二部分（深度技术规格与推演模型）</div>
+      <div class="meta-tag-row">
+        <span class="meta-badge">架构规范：MECE 四层纵向解耦</span>
+        <span class="meta-badge">核心机制：显式页码约束 (Explicit Page Anchor)</span>
+        <span class="meta-badge">联动形态：Obsidian + PDF++ 原生分屏穿透</span>
+        <span class="meta-badge">抗伪幻觉：证据链无法核验绝不进入正式结论</span>
+      </div>
+    </div>
+
+    <h2>一、系统设计哲学与法学痛点攻坚</h2>
+    <p>法学学术研究具有极高的证据严谨性与论辩对抗性。研究生与青年学者在进入陌生细分法域时，普遍面临“文献碎片化、学说对立复杂、通用大模型严重幻觉”三大痛点。通用大语言模型直接应用于法学学术写作时存在不可逾越的鸿沟：</p>
+
+    <div class="visual-grid-3">
+      <div class="visual-card" style="border-top: 3px solid #dc2626;">
+        <div style="font-weight: bold; color: #dc2626; margin-bottom: 6px;">❌ 痛点 1：一本正经的学术伪幻觉</div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          通用大模型缺乏法学专属知识切片，频繁凭空编造虚构的法条条号、《中国法学》卷期号或起止页码，严重违反学术规范。
+        </p>
+      </div>
+      <div class="visual-card" style="border-top: 3px solid #d97706;">
+        <div style="font-weight: bold; color: #d97706; margin-bottom: 6px;">❌ 痛点 2：脱离证据链的空中楼阁</div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          大模型生成的“综述文本”无法穿透追溯至学者论文的具体论证段落，观点张冠李戴，学者无法将其作为后续立论的坚实基础。
+        </p>
+      </div>
+      <div class="visual-card" style="border-top: 3px solid var(--primary-teal);">
+        <div style="font-weight: bold; color: var(--primary-teal); margin-bottom: 6px;">💡 LexTrace：可追溯证据链闭环</div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          坚持“不替代精读，但重塑精读前的认知构建与证据管理”，基于自建权威库，每条学术判断均可毫秒级穿透回溯至原版 PDF 指定页码！
+        </p>
+      </div>
+    </div>
+
+    <h2>二、MECE 四层纵向系统工程架构全景</h2>
+    <p>系统严格遵循相互独立、完全穷尽（MECE）的系统工程规范，划分为四个逻辑清晰、分工明确的支撑层级：</p>
+
+    <div class="flow-diagram-container">
+      <div class="diagram-layer layer-4">
+        <div class="layer-title">
+          <span>第四层：用户交互与学术工作台呈现层 (Presentation Layer)</span>
+          <span style="font-size: 9pt; color: var(--accent-vermilion);">Next.js 15 · Vinext · 斯坦福法学评论暖象牙排版</span>
+        </div>
+        <p class="no-indent" style="font-size: 9.5pt; margin-bottom: 4px;">
+          负责学术视觉呈现与高效人机协同，内置 15 篇/页黄金分页文献列表、阅读历史足迹、学术 Fork 分支派生及检索式持久化记录。
+        </p>
+        <div class="layer-chips">
+          <span class="chip">15篇/页学术列表</span>
+          <span class="chip">微型操作胶囊 (.row-action-group)</span>
+          <span class="chip">现有争议专题看板</span>
+          <span class="chip">作者研究路径梳理</span>
+          <span class="chip">检索式记录中心</span>
+        </div>
+      </div>
+
+      <div class="diagram-layer layer-3">
+        <div class="layer-title">
+          <span>第三层：智能体推理与 Prompt 枢纽层 (Agent & Reasoning Layer)</span>
+          <span style="font-size: 9pt; color: var(--accent-gold);">法学整理 SOP 规范 · 三大核心 Prompt 矩阵 · 无状态 API 窗口</span>
+        </div>
+        <p class="no-indent" style="font-size: 9.5pt; margin-bottom: 4px;">
+          智能体思考中枢，将法学研读规范固化为可执行的 SOP，支持用户无缝接入自有模型（DeepSeek / OpenAI / 本地 Ollama），一键组装物料并驱动推演。
+        </p>
+        <div class="layer-chips">
+          <span class="chip">SOP 论文整理任务单</span>
+          <span class="chip">1. 论文整理 Prompt (五维卡片)</span>
+          <span class="chip">2. 争议结构 Prompt (对立矩阵)</span>
+          <span class="chip">3. 总结趋势 Prompt (立法沿革)</span>
+          <span class="chip">无状态 API 交互网关</span>
+        </div>
+      </div>
+
+      <div class="diagram-layer layer-2">
+        <div class="layer-title">
+          <span>第二层：知识图谱与双向穿透沉淀层 (Knowledge & Link Layer)</span>
+          <span style="font-size: 9pt; color: var(--primary-teal);">Obsidian 原生双链底座 · PDF++ 原生分屏跳转 · YAML 结构化元数据</span>
+        </div>
+        <p class="no-indent" style="font-size: 9.5pt; margin-bottom: 4px;">
+          知识管理与显式证据链锚定中枢。摒弃外部多工具割裂，纯本地离线保存，通过原生 PDF++ 实现笔记卡片与原版 PDF 视窗毫秒级高亮穿透。
+        </p>
+        <div class="layer-chips">
+          <span class="chip">514+ 篇精读卡片</span>
+          <span class="chip">7 大部门法图谱</span>
+          <span class="chip">PDF++ 显式页码穿透</span>
+          <span class="chip">Dataview 类SQL动态检索</span>
+          <span class="chip">Enhancing Mindmap 导图</span>
+        </div>
+      </div>
+
+      <div class="diagram-layer layer-1">
+        <div class="layer-title">
+          <span>第一层：数据全自动采集与摄入预处理层 (Ingestion & Extraction Layer)</span>
+          <span style="font-size: 9pt; color: #475569;">CNKI 双模爬虫 · PyMuPDF 字符流标柱 · EndNote/RIS 解析 · 待审核队列</span>
+        </div>
+        <p class="no-indent" style="font-size: 9.5pt; margin-bottom: 4px;">
+          数据摄入发动机。定向爬取知网权威长篇学术论文，将 PDF 转换为纯文本并强制插入 <code>[[PDF_PAGE:n]]</code> 显式分页标柱，元数据缺失文献自动隔离。
+        </p>
+        <div class="layer-chips">
+          <span class="chip">作者全量模式 (Author Mode)</span>
+          <span class="chip">CLSCI 期刊模式 (Journal Mode)</span>
+          <span class="chip">显式分页插入引擎</span>
+          <span class="chip">待审核隔离队列</span>
+        </div>
+      </div>
+    </div>
+
+    <h2>三、端到端数据流管道与学术证据链溯源流转</h2>
+    <p>系统内部从用户提出研究需求到最终输出写作提纲，经历严密的六步闭环数据流转：</p>
+
+    <table class="academic-table">
+      <thead>
+        <tr>
+          <th>处理阶段</th>
+          <th>输入数据形态</th>
+          <th>核心处理逻辑与算子</th>
+          <th>输出成果物</th>
+          <th>防错与质量门限</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>阶段 1：定向采集</b></td>
+          <td>学者姓名 / 期刊范围 / 检索式</td>
+          <td>知网 Selenium 自动化检索，绕过反爬机制，抓取长文与元数据</td>
+          <td>原版 PDF + 基础元数据 (Title, Author, Year, Pages)</td>
+          <td>过滤书评与短篇消息，保障长篇学术力作</td>
+        </tr>
+        <tr>
+          <td><b>阶段 2：标柱提取</b></td>
+          <td>原版 PDF 二进制字符流</td>
+          <td>PyMuPDF 遍历页面，在每页首部强制注入 <code>[[PDF_PAGE:n]]</code> 标签</td>
+          <td>带分页标柱的结构化 TXT / Markdown 粗稿</td>
+          <td>若 OCR 乱码或文字错序，自动打标移入待审核区</td>
+        </tr>
+        <tr>
+          <td><b>阶段 3：SOP 结构化</b></td>
+          <td>带标柱的论文文本</td>
+          <td>调用 Agent Prompt 1，按五维标准提取核心问题、争议、方案与金句</td>
+          <td>标准 YAML 前言 + Markdown 精读卡片</td>
+          <td>模型推论与原文摘录严格区分，金句必须绑定具体页码</td>
+        </tr>
+        <tr>
+          <td><b>阶段 4：双链入库</b></td>
+          <td>单篇精读卡片</td>
+          <td>自动建立部门法关联、导师学说路径与 7 大争议焦点映射</td>
+          <td>Obsidian 本地双链知识库</td>
+          <td>本地 Python Bridge 毫秒级同步更新至 Web 端</td>
+        </tr>
+        <tr>
+          <td><b>阶段 5：研读与争议透视</b></td>
+          <td>Web 端文献列表</td>
+          <td>用户浏览 15 篇分页，查看争议对立矩阵，标记 <code>★ 重点</code> 或 <code>Fork</code></td>
+          <td>个性化阅读足迹与派生研究工作分支</td>
+          <td>一键复制国标引注代码，解除历史记录数量限制</td>
+        </tr>
+        <tr>
+          <td><b>阶段 6：穿透联动与写作</b></td>
+          <td>笔记中的学术金句</td>
+          <td>点击 <code>OB ↗</code> 唤起 Obsidian，点击页码链接毫秒跳转 PDF 并高亮</td>
+          <td>来源可核验的学术论文写作提纲与引证综述</td>
+          <td><b>100% 杜绝伪学术幻觉，每一句话均可回跳原件</b></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>四、基于 Obsidian + PDF++ 的原生零割裂闭环架构</h2>
+    <div class="callout-box">
+      <div class="callout-title">🌟 核心架构突破：告别多软件碎片化，实现“原著—笔记—大纲”统一场</div>
+      传统学术研究中，学者往往在 Zotero 中看 PDF、在 Word 中写提纲、在微信/网页中与大模型对话，工具链极其碎片化。LexTrace 彻底摒弃了繁琐的 Zotero 外部依赖，采用 <b>Obsidian + 原生 PDF++ 插件</b>实现真正的一体化：
+      <ol style="margin-top: 6px;">
+        <li><b>分屏镜像视窗</b>：左侧并排悬挂结构化 Markdown 精读笔记，右侧原生嵌入原版 PDF 阅读器；</li>
+        <li><b>双向高亮穿透</b>：在左侧笔记中提炼的每一句论述，尾部均带有显式页码锚点。点击该锚点，右侧 PDF 瞬时跳至对应物理页码并在原文对应论述段落施加高亮蒙层；</li>
+        <li><b>写作提纲串联</b>：研究者无需切换软件，直接在 Obsidian 双链画布（Canvas）或思维导图（Mindmap）中将多篇论文的金句锚点串联为学位论文大纲，实现从文献输入到思想输出的无缝跃迁。</li>
+      </ol>
+    </div>
+
+    <div style="margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--border-color); text-align: center; font-size: 9pt; color: var(--text-sub);" class="no-print">
+      法脉 LexTrace · 驱动法学研读与学术写作的数字化跃迁 · 全国高校法学与法律科技创新大赛（赛道A）申报材料
+    </div>
+  </div>
+</body>
+</html>

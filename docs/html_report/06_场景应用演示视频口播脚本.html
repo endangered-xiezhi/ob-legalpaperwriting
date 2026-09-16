@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>06 场景应用演示视频口播脚本 —— 法脉 LexTrace 竞赛申报材料</title>
+  <style>
+    :root {
+      --primary-teal: #1a4d44;
+      --primary-teal-light: #eaf2f0;
+      --primary-teal-hover: #133a33;
+      --accent-vermilion: #a0492e;
+      --accent-vermilion-light: #fbeee9;
+      --accent-gold: #b45309;
+      --accent-gold-light: #fef3c7;
+      --bg-page: #faf8f4;
+      --bg-card: #ffffff;
+      --bg-card-muted: #f6f3eb;
+      --border-color: #ded6c8;
+      --border-light: #ebe5d9;
+      --text-main: #212826;
+      --text-muted: #5c6b66;
+      --text-sub: #788581;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Times New Roman", "SimSun", "STSong", "Songti SC", "Noto Serif SC", serif;
+      font-size: 10.5pt; /* 五号字 */
+      line-height: 1.5;  /* 1.5倍行距 */
+      color: var(--text-main);
+      background-color: var(--bg-page);
+      padding: 24px 0 60px 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .top-action-bar {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .nav-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 9pt;
+      color: var(--primary-teal);
+      text-decoration: none;
+      background: var(--primary-teal-light);
+      border-radius: 4px;
+      border: 1px solid rgba(26,77,68,0.2);
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover, .nav-pill.active {
+      background: var(--primary-teal);
+      color: #ffffff;
+    }
+
+    .btn-print {
+      background: var(--accent-vermilion);
+      color: #ffffff;
+      border: none;
+      padding: 6px 14px;
+      font-size: 9.5pt;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+    }
+
+    .btn-print:hover {
+      background: #8b3a2b;
+    }
+
+    h1.doc-main-title {
+      font-size: 16pt; /* 3号字 */
+      font-weight: bold;
+      text-align: center;
+      color: var(--primary-teal);
+      line-height: 1.4;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .doc-sub-header {
+      text-align: center;
+      font-size: 10.5pt;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--primary-teal);
+      padding-bottom: 12px;
+    }
+
+    .meta-tag-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 9pt;
+      flex-wrap: wrap;
+    }
+
+    .meta-badge {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-color);
+      padding: 2px 8px;
+      border-radius: 3px;
+      color: var(--primary-teal);
+    }
+
+    h2, h3, h4, .section-title {
+      font-size: 12pt; /* 小四号 */
+      font-weight: bold;
+      color: var(--primary-teal);
+      line-height: 1.4;
+      margin-top: 18pt;
+      margin-bottom: 8pt;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2 {
+      border-left: 4px solid var(--primary-teal);
+      padding-left: 8px;
+      background: linear-gradient(90deg, rgba(26,77,68,0.06) 0%, transparent 100%);
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    h3 {
+      border-left: 3px solid var(--accent-vermilion);
+      padding-left: 6px;
+    }
+
+    p, li, div, td, th {
+      font-size: 10.5pt; /* 五号字 */
+      line-height: 1.5;  /* 1.5倍行距 */
+    }
+
+    p {
+      margin-bottom: 8pt;
+      text-align: justify;
+      text-indent: 2em;
+    }
+
+    p.no-indent {
+      text-indent: 0;
+    }
+
+    ul, ol {
+      margin-left: 2em;
+      margin-bottom: 10pt;
+    }
+
+    li {
+      margin-bottom: 4pt;
+    }
+
+    .visual-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 14pt;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+
+    .visual-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14pt;
+    }
+
+    .visual-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14pt;
+    }
+
+    .visual-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14pt;
+    }
+
+    .metric-badge-box {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-color);
+      border-top: 3px solid var(--primary-teal);
+      border-radius: 4px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .metric-num {
+      font-size: 15pt;
+      font-weight: bold;
+      color: var(--primary-teal);
+      font-family: "Times New Roman", serif;
+    }
+
+    .metric-desc {
+      font-size: 9pt;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .flow-diagram-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      margin: 14pt 0;
+    }
+
+    .diagram-layer {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+    }
+
+    .diagram-layer.layer-4 { border-top: 3px solid var(--accent-vermilion); }
+    .diagram-layer.layer-3 { border-top: 3px solid var(--accent-gold); }
+    .diagram-layer.layer-2 { border-top: 3px solid var(--primary-teal); }
+    .diagram-layer.layer-1 { border-top: 3px solid #475569; }
+
+    .layer-title {
+      font-weight: bold;
+      font-size: 11pt;
+      color: var(--primary-teal);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .layer-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .chip {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-light);
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 9.5pt;
+    }
+
+    table.academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12pt 0 16pt 0;
+      font-size: 10pt;
+      background: #ffffff;
+    }
+
+    table.academic-table th, table.academic-table td {
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: middle;
+      line-height: 1.4;
+    }
+
+    table.academic-table thead th {
+      background-color: var(--primary-teal-light);
+      color: var(--primary-teal);
+      font-weight: bold;
+      border-top: 2px solid var(--primary-teal);
+      border-bottom: 1.5px solid var(--primary-teal);
+    }
+
+    table.academic-table tbody tr {
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    table.academic-table tbody tr:nth-child(even) {
+      background-color: #faf9f6;
+    }
+
+    table.academic-table tbody tr:last-child {
+      border-bottom: 2px solid var(--primary-teal);
+    }
+
+    .callout-box {
+      border-left: 4px solid var(--primary-teal);
+      background: var(--primary-teal-light);
+      padding: 10px 14px;
+      margin: 12pt 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 10pt;
+    }
+
+    .callout-box.alert {
+      border-left-color: var(--accent-vermilion);
+      background: var(--accent-vermilion-light);
+    }
+
+    .callout-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: var(--primary-teal);
+    }
+
+    .callout-box.alert .callout-title {
+      color: var(--accent-vermilion);
+    }
+
+    .script-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14pt 0;
+      background: #ffffff;
+    }
+
+    .script-table th {
+      background: var(--primary-teal);
+      color: #ffffff;
+      font-weight: bold;
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 10.5pt;
+    }
+
+    .script-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+      font-size: 10pt;
+      line-height: 1.5;
+    }
+
+    .script-table tr:nth-child(even) {
+      background: #fdfbf7;
+    }
+
+    .time-badge {
+      display: inline-block;
+      background: var(--accent-vermilion-light);
+      color: var(--accent-vermilion);
+      border: 1px solid var(--accent-vermilion);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 9pt;
+      font-family: "Times New Roman", serif;
+    }
+
+    .visual-cue {
+      font-size: 9.5pt;
+      color: var(--primary-teal);
+      background: var(--primary-teal-light);
+      padding: 4px 6px;
+      border-radius: 3px;
+      margin-top: 4px;
+      display: block;
+    }
+
+    .code-tree {
+      background: #212826;
+      color: #e5e7eb;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 9pt;
+      line-height: 1.4;
+      padding: 12px 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10pt 0;
+    }
+
+    .tree-folder { color: #93c5fd; font-weight: bold; }
+    .tree-file { color: #d1d5db; }
+    .tree-comment { color: #9ca3af; font-style: italic; }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 20mm 15mm 20mm 15mm;
+      }
+
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+      }
+
+      .top-action-bar, .no-print {
+        display: none !important;
+      }
+
+      .visual-card, .diagram-layer, table, .flow-diagram-container, .code-tree {
+        box-shadow: none !important;
+        border-color: #999999 !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      h2, h3 {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+
+      .page-break {
+        page-break-after: always;
+        break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    
+    <div class="top-action-bar no-print">
+      <div class="nav-pills">
+        <a href="01_智能体作品及其完整材料.html" class="nav-pill">01_材料交付</a><a href="02_系统架构与功能说明书.html" class="nav-pill">02_架构说明</a><a href="03_AI辅助开发与原创性说明.html" class="nav-pill">03_原创说明</a><a href="04_功能展示与说明材料.html" class="nav-pill">04_功能展示</a><a href="05_数据及资料来源说明.html" class="nav-pill">05_数据来源</a><a href="06_场景应用演示视频口播脚本.html" class="nav-pill active">06_视频脚本</a><a href="index.html" class="nav-pill">📑 目录总览</a>
+      </div>
+      <button class="btn-print" onclick="window.print()">
+        <span>🖨️</span> 打印为精美 PDF (A4)
+      </button>
+    </div>
+    
+
+    <div class="doc-sub-header">
+      <h1 class="doc-main-title">A. 法律实践与法学研究赛道 · 场景应用演示视频口播脚本</h1>
+      <div>全国高校法学与法律科技创新大赛参赛申报材料 · 第六部分（分镜头专业精细台词全展开）</div>
+      <div class="meta-tag-row">
+        <span class="meta-badge">视频规格：1080P 60fps 全高清录屏画中画</span>
+        <span class="meta-badge">严格时长：9 分 40 秒（比赛限额 10 分钟内）</span>
+        <span class="meta-badge">演职人员：法脉 LexTrace 团队负责人（法学研究生）</span>
+        <span class="meta-badge">技术环境：Obsidian + PDF++ 原生分屏双向联动</span>
+      </div>
+    </div>
+
+    <div class="visual-card">
+      <div class="layer-title">
+        <span>🎬 视频制作与演示技术规格指南</span>
+        <span style="font-size: 9pt; color: var(--accent-vermilion); font-weight: normal;">请按照时间轴精确执行录制与剪辑</span>
+      </div>
+      <p class="no-indent" style="font-size: 9.5pt; color: var(--text-muted); margin-bottom: 4px;">
+        <b>镜头语言规范</b>：真人出镜引言 ➔ 1080P 电脑录屏（主讲人右下角微型圆形画中画） ➔ 核心技术点（如 PDF++ 穿透）给 150% 放大局部特写。<br>
+        <b>音频要求</b>：人声温暖自信，吐字清晰；背景搭配极弱音量古典弦乐（建议控制在 -26dB，避免喧宾夺主）。
+      </p>
+    </div>
+
+    <h2>分镜头精细口播脚本对照全表</h2>
+
+    <table class="script-table">
+      <thead>
+        <tr>
+          <th style="width: 14%;">时间节点</th>
+          <th style="width: 36%;">分镜头画面与屏幕操作指引</th>
+          <th style="width: 50%;">完整口播台词内容（文字全量展开）</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="time-badge">00:00 - 00:45</span><br>(45秒)</td>
+          <td>
+            <b>【真人正装出镜 + PPT 封面】</b><br>
+            展示大赛标题与项目名称：法脉 LexTrace。<br>
+            <span class="visual-cue">镜头：中景，主讲人语气沉稳、直击痛点。切入法学生通宵备考与保研面试复习画面。</span>
+          </td>
+          <td>
+            各位评委老师、法学同仁，大家好！我是“法脉 LexTrace”项目的负责人。<br><br>
+            在法学研读与学术写作中，有一个高频却极其痛苦的场景：<b>当你需要在短短几天甚至几小时内，进入一个完全陌生的细分法域，快速建立可靠的文献认知框架，并展开高质量的精读与写作。</b> 无论是在准备保研面试、跨学科选题，还是在研讨课备课时，这种困境都屡见不鲜。<br><br>
+            我自己此前在准备保研面试的过程中，就曾切身经历过这种绝望：通用大模型虽然能快速生成一段看似头头是道的综述，但只要一查证，就会发现大量的期刊卷期是编造的、学者的观点被张冠李戴、经典的奠基文献更是被遗漏！作为严谨的法学研究者，我们根本无法信任通用大模型的输出。
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="time-badge">00:45 - 01:30</span><br>(45秒)</td>
+          <td>
+            <b>【PPT 核心构想动画】</b><br>
+            屏幕呈现动态流程图：从“一句原文 ➔ 显式证据链 ➔ 争议对立矩阵 ➔ 写作提纲”。<br>
+            <span class="visual-cue">动画：高亮显示“显式页码约束”与“100% 来源可溯源”。</span>
+          </td>
+          <td>
+            正是在这样的切肤痛点驱动下，我们研发了 <b>LexTrace</b>。<br><br>
+            我们给它的核心定位是：<b>从一句原文到一个研究问题的可追溯法学研究智能体工作台！</b><br><br>
+            LexTrace 的初心<b>绝不是替代学者的精读本身</b>，而是确保在您开始精读之前，就已经拥有一张来源绝对可靠、脉络无比清晰的文献认知地图！系统基于我们自建的 514 篇知识产权核心数据库，让每一条学术判断、每一个争议焦点，都能顺着证据链毫秒级回溯到原始 PDF 的具体页码，从根本上击碎大模型的学术伪幻觉！
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="time-badge">01:30 - 02:45</span><br>(75秒)</td>
+          <td>
+            <b>【录屏实操：Web 工作台全景】</b><br>
+            浏览器展示 <code>http://localhost:3000</code>。<br>
+            展示护眼的暖象牙宣纸色排版、深松绿主色与顶部学术面包屑。<br>
+            <span class="visual-cue">操作：上下平滑滚动，展示 15 篇/页黄金分页列表，点击部门法标签过滤。</span>
+          </td>
+          <td>
+            现在大家看到的，就是我们全新重构的 LexTrace 学术工作台。<br><br>
+            在视觉设计上，我们完全摒弃了冰冷生硬的通用后台风格，而是严格遵循<b>《斯坦福法学评论》（Stanford Law Review）与麦肯锡咨询报告的经典学术规范</b>——采用护眼的暖象牙宣纸色背景、典雅的深松绿学术主色，正文行间距拉开至 1.8，字号统一采用标准中文五号字，让高强度的文献研读成为一种纯粹的享受。<br><br>
+            请看主界面的文献库，我们设计了<b>一页 15 篇的黄金密度分页</b>，告别了无限滚动的眩晕感。这里收录了我们在知识产权与反不正当竞争法领域实证跑通的 514 篇核心论文。您可以按著作权法、专利法等部门法一键过滤，也可以按作者、年份进行瞬时筛选。
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="time-badge">02:45 - 03:45</span><br>(60秒)</td>
+          <td>
+            <b>【录屏实操：微型操作栏与引注】</b><br>
+            鼠标滑动至文献行，高亮显示 <code>.row-action-group</code>。<br>
+            <span class="visual-cue">操作：点击 <code>★ 重点</code>、点击 <code>引注</code> 弹出 Toast 提示、展示 Fork 与阅读历史。</span>
+          </td>
+          <td>
+            每一篇文献的右侧，都配备了精致的微型操作胶囊。<br><br>
+            第一，点击 <b><code>★ 重点</code></b>，即可将关键论文瞬间纳入您的专属高优追踪清单；<br>
+            第二，我们彻底打破了以往仅能保存 8 条记录的物理瓶颈，在“阅读历史”模块中，所有浏览、标注过的文献都会形成持久化的学术足迹；<br>
+            第三，点击 <b><code>引注</code></b> 按钮，系统会毫秒级为您生成完全符合国家法学引注规范的权威学术引注代码，直接粘贴即可用于论文写作；<br>
+            第四，通过 <b><code>Fork</code> 机制</b>，您可以将前人的研究直接派生至个人分支，自由补充反方论点，而完全不会破坏底层文献资产。
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="time-badge">03:45 - 05:00</span><br>(75秒)</td>
+          <td>
+            <b>【录屏实操：CNKI 采集与检索式记录】</b><br>
+            切换至“知网论文收集”看板。<br>
+            演示“作者模式”与“期刊模式”开关切换。<br>
+            <span class="visual-cue">操作：在检索式框输入并点击 <code>💾 保存当前检索式</code>，展示下方持久化历史列表。</span>
+          </td>
+          <td>
+            那么，这套高质量的文献库是如何建立并持续进化的呢？请看我们的<b>“知网论文收集与检索式记录”</b>模块。<br><br>
+            系统支持<b>作者模式与期刊模式双轨采集</b>：在作者模式下，能穿透抓取王迁、崔国斌等学术名家历年发表的全部论文；在期刊模式下，内置了 16 种 CLSCI 法学核心期刊白名单，自动过滤书评短讯，精准捕获长篇理论力作。<br><br>
+            更贴心的是，我们设计了<b>检索式持久化记录功能</b>：法学研究往往需要反复调优检索式。在这里，您输入的每一套复合检索条件都可以一键保存。系统为您清晰展示保存的历史检索式清单与时间轴，让您的每一次文献调研步骤都具备科学研究的可复现性！
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="time-badge">05:00 - 06:15</span><br>(75秒)</td>
+          <td>
+            <b>【录屏实操：现有争议专题与作者研究路径】</b><br>
+            点击“现有争议专题”选项卡。<br>
+            展开“视听作品范围与权利归属”对立矩阵。<br>
+            <span class="visual-cue">操作：切换至“作者研究路径”，展示特定学者十年思想演进图谱。</span>
+          </td>
+          <td>
+            接下来，是 LexTrace 最具学术深度的核心杀手锏——<b>现有争议专题与作者研究路径</b>。<br><br>
+            初学者最怕的不是读不懂单篇论文，而是不知道这群学者到底在争论什么。我们在知识产权领域梳理了 <b>7 大高频争议专题</b>。例如在“视听作品”争点下，系统不再是简单罗列文献，而是构建了清晰的<b>学者观点对立矩阵</b>——肯定说的立论前提是什么？否定说的核心反驳是什么？折中说的制度妥协方案又是什么？初学者只需 3 分钟，就能全景式看懂该领域十余年来的核心学说交锋！<br><br>
+            同时，点击<b>“作者研究路径”</b>，您可以纵览王迁教授从著作权法第三次修改至今的学术思想演进轨迹，深刻理解立法背景如何重塑学者理论。
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="time-badge">06:15 - 07:30</span><br>(75秒)</td>
+          <td>
+            <b>【录屏实操：Agent Prompt 清单与 API 接入】</b><br>
+            点击“Agent Prompt 清单”页面。<br>
+            逐一点击切换 Pill Tabs：SOP 任务单、1.论文整理、2.争议结构、3.总结趋势、API 窗口。<br>
+            <span class="visual-cue">操作：展示无状态 API 窗口，演示材料自动打包组装并点击发送。</span>
+          </td>
+          <td>
+            那么，这一切背后的智能体大脑是如何运作的呢？请看 <b>Agent Prompt 清单与 SOP 执行中枢</b>。<br><br>
+            我们把顶尖法学团队沉淀的文献研读经验，固化为三大核心 Prompt 体系：<br>
+            1. <b>论文整理 Prompt</b>：驱动模型按“问题提出、学说争议、制度方案、核心论证、显式页码金句”五维标准提取卡片；<br>
+            2. <b>争议结构 Prompt</b>：专门负责拆解对抗性的法学论辩逻辑；<br>
+            3. <b>总结趋势 Prompt</b>：宏观提炼前沿立法与审判趋势。<br><br>
+            更强大的是，我们提供了<b>无状态的 API 交互窗口</b>！您可以直接填入自己的 DeepSeek、OpenAI 密钥或本地模型，系统会自动把当前勾选的文献材料与所选 Prompt 组合打包，实现与前沿大模型的无缝联动，本地数据 100% 安全不泄露！
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="time-badge">07:30 - 08:45</span><br>(75秒)</td>
+          <td>
+            <b>【录屏实操：Obsidian + PDF++ 原生高光联动】</b><br>
+            在 Web 工作台点击文献行的 <code>OB ↗</code> 按钮。<br>
+            桌面端瞬间弹出 Obsidian，分屏展示左侧笔记卡片与右侧原版 PDF。<br>
+            <span class="visual-cue">操作特写：鼠标点击笔记中的 <code>[[论视听作品.pdf#page=106]]</code>，右侧 PDF 毫秒级跳至 106 页并施加高亮。</span>
+          </td>
+          <td>
+            下面，是见证奇迹的高光时刻——我们来看 <b>Obsidian + 原生 PDF++ 插件带来的零割裂穿透式联动</b>。<br><br>
+            在早期我们曾尝试过 Zotero 等外部工具，但发现跨软件数据同步存在严重割裂。因此我们果断采用原生 PDF++：在工作台上点击任意文献的 <code>OB ↗</code> 按钮，本地 Obsidian 瞬间唤起！请看大屏幕：<b>左侧是结构化的精读笔记，右侧原生分屏悬挂原版 PDF 全文！</b><br><br>
+            当我们在左侧卡片中看到提炼的核心学术金句：“认定视听作品必须具备由伴音或无伴音画面组成的实质要件”，只要<b>鼠标点击后面的显式页码链接</b>——看！右侧原版 PDF 毫秒级跳转到第 106 页第二自然段，并精准对原文段落施加高亮蒙层！<br><br>
+            这就是我们所坚持的“显式证据链”：每一句话都有据可查，每一次引用都精准到物理页码！
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="time-badge">08:45 - 09:40</span><br>(55秒)</td>
+          <td>
+            <b>【真人出镜 + 团队荣誉与壁垒总结】</b><br>
+            屏幕呈现团队腾讯开悟算法获奖证书、星瀚杯全国总决赛入围凭证及实证评测表。<br>
+            <span class="visual-cue">镜头：主讲人自信从容，总结四层技术壁垒。</span>
+          </td>
+          <td>
+            总结而言，LexTrace 拥有坚实的工程底座与独特的法学专业壁垒：<br><br>
+            我们团队此前在<b>腾讯开悟赛事获奖并成功晋级“星瀚杯”全国人工智能创新大赛总决赛</b>，具备丰富的大模型 Agent 架构经验；系统拥有 514 篇真实跑通的实证文献库，严格遵循著作权法第二十四条“转化性使用”原则；整个系统默认纯本地计算，确保研读者的核心课题思路零泄露！
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="time-badge">09:40 - 10:00</span><br>(20秒)</td>
+          <td>
+            <b>【全景结束画面 + 致谢结语】</b><br>
+            屏幕定格在开源仓库地址、在线演示网址与致谢标语。<br>
+            <span class="visual-cue">主讲人致谢鞠躬，画面淡出。</span>
+          </td>
+          <td>
+            从一句原文，到研究问题，再到严谨的学术论证——法脉 LexTrace 致力于成为每一位法学研究者最值得信赖的数字化外脑与学术护航者！<br><br>
+            感谢各位评委老师的倾听与指导！欢迎大家体验与交流！
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--border-color); text-align: center; font-size: 9pt; color: var(--text-sub);" class="no-print">
+      法脉 LexTrace · 驱动法学研读与学术写作的数字化跃迁 · 全国高校法学与法律科技创新大赛（赛道A）申报材料
+    </div>
+  </div>
+</body>
+</html>

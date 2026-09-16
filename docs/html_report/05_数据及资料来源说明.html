@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05 数据及资料来源说明 —— 法脉 LexTrace 竞赛申报材料</title>
+  <style>
+    :root {
+      --primary-teal: #1a4d44;
+      --primary-teal-light: #eaf2f0;
+      --primary-teal-hover: #133a33;
+      --accent-vermilion: #a0492e;
+      --accent-vermilion-light: #fbeee9;
+      --accent-gold: #b45309;
+      --accent-gold-light: #fef3c7;
+      --bg-page: #faf8f4;
+      --bg-card: #ffffff;
+      --bg-card-muted: #f6f3eb;
+      --border-color: #ded6c8;
+      --border-light: #ebe5d9;
+      --text-main: #212826;
+      --text-muted: #5c6b66;
+      --text-sub: #788581;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Times New Roman", "SimSun", "STSong", "Songti SC", "Noto Serif SC", serif;
+      font-size: 10.5pt; /* 五号字 */
+      line-height: 1.5;  /* 1.5倍行距 */
+      color: var(--text-main);
+      background-color: var(--bg-page);
+      padding: 24px 0 60px 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page-container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .top-action-bar {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .nav-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 9pt;
+      color: var(--primary-teal);
+      text-decoration: none;
+      background: var(--primary-teal-light);
+      border-radius: 4px;
+      border: 1px solid rgba(26,77,68,0.2);
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover, .nav-pill.active {
+      background: var(--primary-teal);
+      color: #ffffff;
+    }
+
+    .btn-print {
+      background: var(--accent-vermilion);
+      color: #ffffff;
+      border: none;
+      padding: 6px 14px;
+      font-size: 9.5pt;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+    }
+
+    .btn-print:hover {
+      background: #8b3a2b;
+    }
+
+    h1.doc-main-title {
+      font-size: 16pt; /* 3号字 */
+      font-weight: bold;
+      text-align: center;
+      color: var(--primary-teal);
+      line-height: 1.4;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .doc-sub-header {
+      text-align: center;
+      font-size: 10.5pt;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--primary-teal);
+      padding-bottom: 12px;
+    }
+
+    .meta-tag-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 9pt;
+      flex-wrap: wrap;
+    }
+
+    .meta-badge {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-color);
+      padding: 2px 8px;
+      border-radius: 3px;
+      color: var(--primary-teal);
+    }
+
+    h2, h3, h4, .section-title {
+      font-size: 12pt; /* 小四号 */
+      font-weight: bold;
+      color: var(--primary-teal);
+      line-height: 1.4;
+      margin-top: 18pt;
+      margin-bottom: 8pt;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h2 {
+      border-left: 4px solid var(--primary-teal);
+      padding-left: 8px;
+      background: linear-gradient(90deg, rgba(26,77,68,0.06) 0%, transparent 100%);
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    h3 {
+      border-left: 3px solid var(--accent-vermilion);
+      padding-left: 6px;
+    }
+
+    p, li, div, td, th {
+      font-size: 10.5pt; /* 五号字 */
+      line-height: 1.5;  /* 1.5倍行距 */
+    }
+
+    p {
+      margin-bottom: 8pt;
+      text-align: justify;
+      text-indent: 2em;
+    }
+
+    p.no-indent {
+      text-indent: 0;
+    }
+
+    ul, ol {
+      margin-left: 2em;
+      margin-bottom: 10pt;
+    }
+
+    li {
+      margin-bottom: 4pt;
+    }
+
+    .visual-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 14pt;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+
+    .visual-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14pt;
+    }
+
+    .visual-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14pt;
+    }
+
+    .visual-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14pt;
+    }
+
+    .metric-badge-box {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-color);
+      border-top: 3px solid var(--primary-teal);
+      border-radius: 4px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .metric-num {
+      font-size: 15pt;
+      font-weight: bold;
+      color: var(--primary-teal);
+      font-family: "Times New Roman", serif;
+    }
+
+    .metric-desc {
+      font-size: 9pt;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .flow-diagram-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      margin: 14pt 0;
+    }
+
+    .diagram-layer {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+    }
+
+    .diagram-layer.layer-4 { border-top: 3px solid var(--accent-vermilion); }
+    .diagram-layer.layer-3 { border-top: 3px solid var(--accent-gold); }
+    .diagram-layer.layer-2 { border-top: 3px solid var(--primary-teal); }
+    .diagram-layer.layer-1 { border-top: 3px solid #475569; }
+
+    .layer-title {
+      font-weight: bold;
+      font-size: 11pt;
+      color: var(--primary-teal);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .layer-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .chip {
+      background: var(--bg-card-muted);
+      border: 1px solid var(--border-light);
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 9.5pt;
+    }
+
+    table.academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12pt 0 16pt 0;
+      font-size: 10pt;
+      background: #ffffff;
+    }
+
+    table.academic-table th, table.academic-table td {
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: middle;
+      line-height: 1.4;
+    }
+
+    table.academic-table thead th {
+      background-color: var(--primary-teal-light);
+      color: var(--primary-teal);
+      font-weight: bold;
+      border-top: 2px solid var(--primary-teal);
+      border-bottom: 1.5px solid var(--primary-teal);
+    }
+
+    table.academic-table tbody tr {
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    table.academic-table tbody tr:nth-child(even) {
+      background-color: #faf9f6;
+    }
+
+    table.academic-table tbody tr:last-child {
+      border-bottom: 2px solid var(--primary-teal);
+    }
+
+    .callout-box {
+      border-left: 4px solid var(--primary-teal);
+      background: var(--primary-teal-light);
+      padding: 10px 14px;
+      margin: 12pt 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 10pt;
+    }
+
+    .callout-box.alert {
+      border-left-color: var(--accent-vermilion);
+      background: var(--accent-vermilion-light);
+    }
+
+    .callout-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: var(--primary-teal);
+    }
+
+    .callout-box.alert .callout-title {
+      color: var(--accent-vermilion);
+    }
+
+    .script-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14pt 0;
+      background: #ffffff;
+    }
+
+    .script-table th {
+      background: var(--primary-teal);
+      color: #ffffff;
+      font-weight: bold;
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 10.5pt;
+    }
+
+    .script-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+      font-size: 10pt;
+      line-height: 1.5;
+    }
+
+    .script-table tr:nth-child(even) {
+      background: #fdfbf7;
+    }
+
+    .time-badge {
+      display: inline-block;
+      background: var(--accent-vermilion-light);
+      color: var(--accent-vermilion);
+      border: 1px solid var(--accent-vermilion);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 9pt;
+      font-family: "Times New Roman", serif;
+    }
+
+    .visual-cue {
+      font-size: 9.5pt;
+      color: var(--primary-teal);
+      background: var(--primary-teal-light);
+      padding: 4px 6px;
+      border-radius: 3px;
+      margin-top: 4px;
+      display: block;
+    }
+
+    .code-tree {
+      background: #212826;
+      color: #e5e7eb;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 9pt;
+      line-height: 1.4;
+      padding: 12px 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10pt 0;
+    }
+
+    .tree-folder { color: #93c5fd; font-weight: bold; }
+    .tree-file { color: #d1d5db; }
+    .tree-comment { color: #9ca3af; font-style: italic; }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 20mm 15mm 20mm 15mm;
+      }
+
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+      }
+
+      .top-action-bar, .no-print {
+        display: none !important;
+      }
+
+      .visual-card, .diagram-layer, table, .flow-diagram-container, .code-tree {
+        box-shadow: none !important;
+        border-color: #999999 !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      h2, h3 {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+
+      .page-break {
+        page-break-after: always;
+        break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    
+    <div class="top-action-bar no-print">
+      <div class="nav-pills">
+        <a href="01_智能体作品及其完整材料.html" class="nav-pill">01_材料交付</a><a href="02_系统架构与功能说明书.html" class="nav-pill">02_架构说明</a><a href="03_AI辅助开发与原创性说明.html" class="nav-pill">03_原创说明</a><a href="04_功能展示与说明材料.html" class="nav-pill">04_功能展示</a><a href="05_数据及资料来源说明.html" class="nav-pill active">05_数据来源</a><a href="06_场景应用演示视频口播脚本.html" class="nav-pill">06_视频脚本</a><a href="index.html" class="nav-pill">📑 目录总览</a>
+      </div>
+      <button class="btn-print" onclick="window.print()">
+        <span>🖨️</span> 打印为精美 PDF (A4)
+      </button>
+    </div>
+    
+
+    <div class="doc-sub-header">
+      <h1 class="doc-main-title">A. 法律实践与法学研究赛道 · 数据及资料来源说明</h1>
+      <div>全国高校法学与法律科技创新大赛参赛申报材料 · 第五部分（合规、授权与开源生态）</div>
+      <div class="meta-tag-row">
+        <span class="meta-badge">数据权威性：CNKI / CSSCI / 16种CLSCI核心</span>
+        <span class="meta-badge">法理依据：著作权法第二十四条“转化性使用”</span>
+        <span class="meta-badge">安全架构：Local-First 纯本地离线计算</span>
+        <span class="meta-badge">开源基石：Next.js 15 / PyMuPDF / Obsidian</span>
+      </div>
+    </div>
+
+    <h2>一、数据源权威性与采集范围界定</h2>
+    <p>为保证法学研究的最高学术水准，本系统所纳入的学术文献与司法裁判数据，全部源自我国公认的国家级权威法学数据库：</p>
+
+    <div class="visual-grid-3">
+      <div class="visual-card" style="border-top: 3px solid var(--primary-teal);">
+        <div style="font-weight: bold; color: var(--primary-teal); margin-bottom: 4px;">
+          📚 学术文献数据库
+        </div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          <b>中国知网（CNKI）</b>学术期刊网络出版总库、<b>中文社会科学引文索引（CSSCI）</b>及<b>中国法学核心科研评价来源期刊（CLSCI 16 种期刊）</b>。
+        </p>
+      </div>
+
+      <div class="visual-card" style="border-top: 3px solid var(--accent-vermilion);">
+        <div style="font-weight: bold; color: var(--accent-vermilion); margin-bottom: 4px;">
+          ⚖️ 司法审判与案例库
+        </div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          <b>最高人民法院官网公报案例</b>、<b>最高人民法院知识产权法庭典型裁判要旨</b>及中国裁判文书网公开文书。
+        </p>
+      </div>
+
+      <div class="visual-card" style="border-top: 3px solid var(--accent-gold);">
+        <div style="font-weight: bold; color: var(--accent-gold); margin-bottom: 4px;">
+          📜 法律法规规范渊源
+        </div>
+        <p class="no-indent" style="font-size: 9pt; color: var(--text-muted);">
+          <b>国家法律法规数据库</b>收录的现行有效法律、行政法规、部门规章及最高人民法院相关司法解释。
+        </p>
+      </div>
+    </div>
+
+    <h2>二、著作权法“转化性使用”（Transformative Use）法理依据</h2>
+    <p>针对法学文献数字化整理与知识卡片生成的合法性，团队进行了严格的著作权法合规论证：</p>
+
+    <div class="callout-box">
+      <div class="callout-title">📖 《中华人民共和国著作权法》第二十四条第一款第二项法定合理使用：</div>
+      “为介绍、评论某一作品或者说明某一问题，在作品中适当引用他人已经发表的作品……可以不经著作权人许可，不向其支付报酬，但应当指明作者姓名或者名称、作品名称……”
+    </div>
+
+    <div class="visual-grid-2">
+      <div class="visual-card">
+        <div style="font-weight: bold; color: var(--primary-teal); margin-bottom: 4px;">
+          1. 高度智力增值的转化性使用
+        </div>
+        <p class="no-indent" style="font-size: 9.5pt; color: var(--text-muted);">
+          系统生成的 Markdown 卡片并非对原论文版式的简单复制，而是对原文核心研究问题、论证链条、学说争议及制度方案的<b>学术评注、抽象归纳与批判性分析</b>，赋予了原作品全新的学术检索与图谱导览功能，具备显著的转化性使用特征。
+        </p>
+      </div>
+
+      <div class="visual-card">
+        <div style="font-weight: bold; color: var(--accent-vermilion); margin-bottom: 4px;">
+          2. 非商业性与促进原作品传播
+        </div>
+        <p class="no-indent" style="font-size: 9.5pt; color: var(--text-muted);">
+          本系统属于纯粹的高校科研与学术教学辅助工具，绝不向任何第三方售卖文献。卡片中明确标示原作者姓名、出处期刊、卷期及精确页码，能够强力引导研读者查阅并购买原版知网期刊数据库，对原出版物的潜在市场无任何负面替代效应。
+        </p>
+      </div>
+    </div>
+
+    <h2>三、知识库资产规模与覆盖法域分布</h2>
+    <p>截至 2026 年 8 月，系统已在知识产权与竞争法领域跑通 514 篇核心文献，学科分布如下：</p>
+
+    <table class="academic-table">
+      <thead>
+        <tr>
+          <th>部门法/专题法域</th>
+          <th>涵盖核心论文数</th>
+          <th>代表性研究议题</th>
+          <th>主要关联学者</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>著作权法</b></td>
+          <td>168 篇</td>
+          <td>视听作品外延、合理使用制度重构、著作权侵权法定赔偿适用边界</td>
+          <td>王迁、崔国斌、熊琦、李琛</td>
+        </tr>
+        <tr>
+          <td><b>专利法与反垄断法</b></td>
+          <td>112 篇</td>
+          <td>标准必要专利（SEP）禁令救济、FRAND 许可费率裁判标准、专利联营</td>
+          <td>管育鹰、冯术杰、张平</td>
+        </tr>
+        <tr>
+          <td><b>商标法与反不正当竞争法</b></td>
+          <td>134 篇</td>
+          <td>商标防御性注册规制、商业秘密侵权举证责任分配、反法第二条一般条款适用</td>
+          <td>孔祥俊、蒋舸、杜颖</td>
+        </tr>
+        <tr>
+          <td><b>数字经济与人工智能法</b></td>
+          <td>100 篇</td>
+          <td>数据权益保护模式（赋权说 vs 行为规制说）、AIGC 可版权性、算法备案合规</td>
+          <td>申卫星、龙卫球、程啸</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>四、开源代码组件与第三方依赖许可证矩阵</h2>
+    <p>系统完全构筑在现代化开源技术底座之上，严格遵循各项开源协议规定：</p>
+
+    <table class="academic-table">
+      <thead>
+        <tr>
+          <th>开源软件 / 依赖组件</th>
+          <th>版本号</th>
+          <th>承担角色与技术职责</th>
+          <th>开源许可证 (License)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Next.js / React</b></td>
+          <td>v15.0 / v19.0</td>
+          <td>前端响应式学术工作台开发框架与边缘静态预渲染中枢</td>
+          <td>MIT License</td>
+        </tr>
+        <tr>
+          <td><b>Vinext / Vite</b></td>
+          <td>v8.0</td>
+          <td>极速开发服务器与生产环境单页应用预构建管线</td>
+          <td>MIT License</td>
+        </tr>
+        <tr>
+          <td><b>PyMuPDF (fitz)</b></td>
+          <td>v1.23+</td>
+          <td>底层 PDF 高性能文本抽取与显式 <code>[[PDF_PAGE:n]]</code> 标柱注入</td>
+          <td>GNU Affero GPL v3 / Commercial</td>
+        </tr>
+        <tr>
+          <td><b>Python Requests / BS4</b></td>
+          <td>v2.31+</td>
+          <td>网络学术元数据解析与 HTTP 桥接服务器</td>
+          <td>Apache 2.0 / MIT</td>
+        </tr>
+        <tr>
+          <td><b>Obsidian Community Plugins</b></td>
+          <td>Latest</td>
+          <td>预装 Dataview (类SQL检索), PDF++ (分屏穿透), Enhancing Mindmap (导图)</td>
+          <td>MIT License</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout-box">
+      <div class="callout-title">🔒 纯本地优先 (Local-First) 隐私与数据主权承诺</div>
+      本系统在架构上贯彻 <b>Local-First</b> 理念：所有文献文本、PDF 二进制文件、用户研读笔记及学位论文提纲，<b>100% 保存在研读者个人的本地计算机硬盘中</b>。在使用大模型 API 时，仅以无状态方式向用户自行配置的模型端点发送当前选中的片段，绝不向任何第三方服务器回传、存储或转售用户的未公开学术成果！
+    </div>
+
+    <div style="margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--border-color); text-align: center; font-size: 9pt; color: var(--text-sub);" class="no-print">
+      法脉 LexTrace · 驱动法学研读与学术写作的数字化跃迁 · 全国高校法学与法律科技创新大赛（赛道A）申报材料
+    </div>
+  </div>
+</body>
+</html>
