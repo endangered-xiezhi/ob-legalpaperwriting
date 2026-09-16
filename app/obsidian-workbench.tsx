@@ -110,10 +110,10 @@ function buildSimpleCitation(note: NoteRecord) {
   return `${authors}：《${note.title}》，载《${journal}》${year}年${issue}。`;
 }
 
-export default function ObsidianWorkbench() {
+export default function ObsidianWorkbench({ initialData }: { initialData?: NavigationData }) {
   const [view, setView] = useState<View>("overview");
-  const [navigation, setNavigation] = useState<NavigationData | null>(null);
-  const [bridgeState, setBridgeState] = useState<"loading" | "connected" | "offline">("loading");
+  const [navigation, setNavigation] = useState<NavigationData | null>(initialData ?? null);
+  const [bridgeState, setBridgeState] = useState<"loading" | "connected" | "offline">(initialData ? "connected" : "loading");
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [libraryFilter, setLibraryFilter] = useState<LibraryFilter>("all");
@@ -239,32 +239,61 @@ export default function ObsidianWorkbench() {
 
   async function openNote(path: string) {
     setNoteLoading(true);
-    try {
-      const response = await fetch(`${BRIDGE}/api/vault/note?path=${encodeURIComponent(path)}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "读取失败");
-      setSelectedNote(data.note);
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : "无法读取笔记");
-    } finally {
-      setNoteLoading(false);
+    const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    if (isLocal) {
+      try {
+        const response = await fetch(`${BRIDGE}/api/vault/note?path=${encodeURIComponent(path)}`);
+        const data = await response.json();
+        if (response.ok && data.note) {
+          setSelectedNote(data.note);
+          setNoteLoading(false);
+          return;
+        }
+      } catch {
+        // fall through to fallback
+      }
     }
+    // Fallback for cloud/offline: look up note in navigation data
+    const found = navigation?.searchNotes.find((n) => n.path === path);
+    if (found) {
+      setSelectedNote({
+        ...found,
+        backlinks: [],
+        localPath: found.path,
+      });
+    } else {
+      setNotice("在当前知识库中未检索到该笔记。");
+    }
+    setNoteLoading(false);
   }
 
   async function openInObsidian(path = "") {
-    try {
-      const response = await fetch(`${BRIDGE}/api/obsidian/open`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "打开失败");
-      setNotice(path ? "已交给 Obsidian 打开原笔记。" : "已交给 Obsidian 打开知识库。");
-    } catch {
-      if (path) await copyText(path, "无法调用 Obsidian，笔记路径已复制。");
-      else setNotice("未能调用 Obsidian，请直接打开本地仓库中的知识产权研究导航。");
+    const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    if (isLocal) {
+      try {
+        const response = await fetch(`${BRIDGE}/api/obsidian/open`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setNotice(path ? "已交给 Obsidian 打开原笔记。" : "已交给 Obsidian 打开知识库。");
+          return;
+        }
+      } catch {
+        // fall through to URI scheme
+      }
     }
+    // Client-side URI scheme fallback (works from Vercel / any browser on Mac/iOS/Windows!)
+    const vaultId = navigation?.vaultName || "知识产权";
+    const params = new URLSearchParams({ vault: vaultId });
+    if (path) {
+      params.set("file", path.replace(/^知识产权\//, ""));
+    }
+    const uri = `obsidian://open?${params.toString()}`;
+    window.location.href = uri;
+    setNotice("正在唤起本地 Obsidian 客户端打开原笔记…");
   }
 
   function toggleContext(path: string) {
