@@ -21,10 +21,22 @@ def main() -> None:
     if not journals:
         raise SystemExit("未选择任何期刊，已停止启动爬虫。")
 
-    crawler_root = Path(os.environ.get("LEXTRACE_CNKI_ROOT", str(DEFAULT_CRAWLER_ROOT))).expanduser()
-    script_path = crawler_root / "pdf_downloader.py"
-    if not script_path.exists():
-        raise SystemExit(f"未找到爬虫脚本：{script_path}")
+    candidates = [
+        Path(os.environ.get("LEXTRACE_CNKI_ROOT", "")).expanduser() if os.environ.get("LEXTRACE_CNKI_ROOT") else None,
+        DEFAULT_CRAWLER_ROOT,
+        Path("/Users/kansang/Documents/Codex/2026-08-08/h/cnki_crawler"),
+        Path("/Users/kansang/Downloads/claude 使用专用/ob-legalpaperwriting/cnki_crawler"),
+    ]
+    script_path = None
+    crawler_root = None
+    for cand in candidates:
+        if cand and (cand / "pdf_downloader.py").exists():
+            crawler_root = cand.resolve()
+            script_path = crawler_root / "pdf_downloader.py"
+            break
+
+    if not script_path or not script_path.exists():
+        raise SystemExit(f"未找到爬虫脚本：{DEFAULT_CRAWLER_ROOT / 'pdf_downloader.py'}")
 
     sys.path.insert(0, str(crawler_root))
     import config as crawler_config  # type: ignore

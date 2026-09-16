@@ -697,9 +697,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 "#!/bin/zsh\n"
                 f"cd {shlex.quote(str(PROJECT_ROOT))}\n"
                 f"{' '.join(shlex.quote(part) for part in command)}\n"
-                "status=$?\n"
+                "exit_code=$?\n"
                 "echo\n"
-                "echo \"LexTrace：知网采集进程已结束，退出码 $status。\"\n"
+                "echo \"LexTrace：知网采集进程已结束，退出码 $exit_code。\"\n"
                 "echo \"下一步：回到LexTrace待处理队列进行初筛或交给Agent。\"\n"
                 "read \"?按回车关闭窗口…\"\n",
                 encoding="utf-8",
