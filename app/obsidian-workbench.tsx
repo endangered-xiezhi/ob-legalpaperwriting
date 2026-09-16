@@ -322,13 +322,18 @@ export default function ObsidianWorkbench({ initialData }: { initialData?: Navig
     if (document.visibilityState !== "visible") return;
     try {
       const response = await fetch(`${BRIDGE}/api/vault/version`);
-      if (!response.ok) return;
+      if (!response.ok) {
+        setBridgeState("offline");
+        return;
+      }
       const data = await response.json();
-      if (versionRef.current && data.version !== versionRef.current) {
+      if (!versionRef.current || data.version !== versionRef.current) {
         await loadNavigation(true);
+      } else {
+        setBridgeState((prev) => prev !== "connected" ? "connected" : prev);
       }
     } catch {
-      // Keep visible
+      setBridgeState("offline");
     }
   }, [loadNavigation]);
 
