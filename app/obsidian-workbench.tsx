@@ -112,9 +112,10 @@ const FAMOUS_AUTHORS = [
 
 const CORE_PROMPTS = {
   paper: {
-    name: "论文整理 Prompt（结构化分析与SOP对齐）",
-    tag: "整理",
-    desc: "按库内SOP规范逐项提取题名、作者、刊物、核心问题、论证链与制度方案，拒绝臆测。",
+    name: "论文整理 Prompt",
+    subtitle: "结构化分析与SOP对齐",
+    tag: "整理规范",
+    desc: "严格按《法学论文整理SOP》提取题名、作者、刊物、核心问题、论证链与制度方案，区分原文与概括，保留限定词。",
     template: `你是一名严谨的法学学术研究助理与文献整理专家。请严格按照《法学论文整理SOP：Agent通用执行手册》对所选文献进行标准化 Markdown 提取与深度解构：
 
 【核心基本原则】
@@ -133,9 +134,10 @@ const CORE_PROMPTS = {
 - 延伸思考与回看复核提示（列明需进一步查验具体页码的论断）`,
   },
   controversy: {
-    name: "争议结构 Prompt（学说流派与争点矩阵）",
-    tag: "争点",
-    desc: "围绕具体争议命题横向对比观点主张、理论依据、比较法资源与裁判后果评估。",
+    name: "争议结构 Prompt",
+    subtitle: "学说流派与争点矩阵",
+    tag: "学说争点",
+    desc: "围绕具体争议命题横向解构观点主张（A说 vs B说 vs 折衷说）、比较法资源、制度设计与司法裁判后果评估。",
     template: `你是一名法学学术争议与学说流派对比专家。请根据《法学论文整理SOP》对所选文献中的学术争议焦点进行横向对比与结构化解构：
 
 【分析要求】
@@ -150,9 +152,10 @@ const CORE_PROMPTS = {
 3. 形成争议矩阵表格，并输出中立、客观的学术对话梳理，不预设结论。`,
   },
   trend: {
-    name: "总结趋势 Prompt（学术流变与发展脉络）",
-    tag: "趋势",
-    desc: "基于文献样本梳理研究重点演化、年代迁徙、学者研究路径与潜在研究增量。",
+    name: "总结趋势 Prompt",
+    subtitle: "学术流变与发展脉络",
+    tag: "趋势脉络",
+    desc: "基于文献样本梳理研究重点演化、年代迁徙、学者学术路径传承与潜在学术增量空间。",
     template: `你是一名法学学科史与学术脉络梳理专家。请根据《法学论文整理SOP》对所选研究材料归纳学术演进趋势与学术图谱：
 
 【分析要求】
@@ -373,7 +376,7 @@ export default function ObsidianWorkbench({ initialData }: { initialData?: Navig
       const target = prev.find((item) => item.path === path);
       if (target) {
         nextList = prev.map((item) => item.path === path ? { ...item, forked: !item.forked } : item);
-        setNotice(target.forked ? "已取消 Fork 标星。" : "已将文献 Fork 标星为重点关注记录。");
+        setNotice(target.forked ? "已取消重点收藏。" : "已将文献加入「重点收藏 (Fork)」！");
       } else {
         const note = navigation?.searchNotes.find((n) => n.path === path);
         if (!note) return prev;
@@ -387,7 +390,7 @@ export default function ObsidianWorkbench({ initialData }: { initialData?: Navig
           timestamp: Date.now(),
           forked: true,
         }, ...prev];
-        setNotice("已将文献 Fork 标星为重点关注记录。");
+        setNotice("已将文献加入「重点收藏 (Fork)」！");
       }
       try {
         localStorage.setItem("lextrace_reading_history", JSON.stringify(nextList));
@@ -502,7 +505,7 @@ export default function ObsidianWorkbench({ initialData }: { initialData?: Navig
       ? contextPaths.map((p) => `- ${p}`).join("\n")
       : "- 尚未选择具体材料（可在论文目录、争议专题或阅读历史中勾选任意数量文献）";
 
-    return `【任务指令：${activePrompt.name}】
+    return `【任务指令：${activePrompt.name}（${activePrompt.subtitle}）】
 ${customTaskRemark ? `用户补充要求：${customTaskRemark}\n\n` : ""}执行规范：
 严格遵守《知识产权/研究趋势/法学论文整理SOP_Agent通用执行手册.md》四大原则：全文阅读原则、原文忠实原则、元数据保守原则、可回溯核验原则。
 
@@ -536,7 +539,6 @@ ${materials}
     setAgentApiOutput("正在向 Agent 接口发送任务并等待响应...\n");
     try {
       saveAgentApiConfig();
-      // Simulate real API dispatch or handle test
       await new Promise((resolve) => setTimeout(resolve, 800));
       const simulatedResponse = `[Agent 响应已就绪 · 模型: ${agentModel}]
 ✓ SOP 规范核验通过：全文阅读原则、元数据保守原则、原文忠实原则均已挂载。
@@ -769,26 +771,48 @@ ${materials}
     }
   }
 
+  // Refined Harmonious Action Buttons (Fixes Clunky 4-Rectangles)
   function noteActions(note: NoteRecord) {
     const isForked = readHistory.some((h) => h.path === note.path && h.forked);
+    const isSelected = contextPaths.includes(note.path);
+
     return (
-      <span className="row-actions">
+      <div className="row-action-group">
         <button
           type="button"
-          className={`fork-btn ${isForked ? "forked" : ""}`}
-          title={isForked ? "已 Fork 标星" : "Fork 标星到历史重点"}
+          className={`action-btn action-fork ${isForked ? "forked" : ""}`}
+          title={isForked ? "已收藏至重点文献" : "收藏至重点文献 (Fork)"}
           onClick={() => toggleFork(note.path)}
         >
-          {isForked ? "★ 已Fork" : "☆ Fork"}
+          {isForked ? "★ 重点" : "☆ 收藏"}
         </button>
         {note.isPaper && (
-          <button type="button" className="cite-action-btn" title="一键生成法学引注" onClick={() => void openQuickCitation(note)}>引注</button>
+          <button
+            type="button"
+            className="action-btn action-cite"
+            title="一键生成法学引注"
+            onClick={() => void openQuickCitation(note)}
+          >
+            引注
+          </button>
         )}
-        <button type="button" className={contextPaths.includes(note.path) ? "selected" : ""} onClick={() => toggleContext(note.path)}>
-          {contextPaths.includes(note.path) ? "已选材料" : "+ Agent材料"}
+        <button
+          type="button"
+          className={`action-btn action-select ${isSelected ? "selected" : ""}`}
+          title={isSelected ? "已加入研究材料清单" : "加入研究材料清单"}
+          onClick={() => toggleContext(note.path)}
+        >
+          {isSelected ? "✓ 已选" : "+ 材料"}
         </button>
-        <button type="button" onClick={() => void openInObsidian(note.path)}>OB ↗</button>
-      </span>
+        <button
+          type="button"
+          className="action-btn action-ob"
+          title="在本地 Obsidian 中打开原笔记"
+          onClick={() => void openInObsidian(note.path)}
+        >
+          OB ↗
+        </button>
+      </div>
     );
   }
 
@@ -858,18 +882,18 @@ ${materials}
           ))}
         </section>
 
-        <section className="overview-columns">
+        <section className="overview-columns" style={{ marginTop: 36 }}>
           <div className="panel-card">
             <div className="panel-head">
               <div><span className="eyebrow">02 · CONTROVERSIES</span><h3>争议专题</h3></div>
-              <button type="button" onClick={() => setView("relations")}>查看全部 ↗</button>
+              <button type="button" className="quiet-button" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => setView("relations")}>查看全部 ↗</button>
             </div>
             <div className="domain-list">
               {(navigation?.controversies ?? []).slice(0, 7).map((note, index) => (
-                <button type="button" key={note.path} onClick={() => void openNote(note.path)}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{note.title}</strong>
-                  <em>进入</em>
+                <button type="button" key={note.path} onClick={() => void openNote(note.path)} style={{ display: "flex", justifyContent: "space-between", padding: "12px 6px", border: 0, borderBottom: "1px solid var(--line-light)", background: "transparent", cursor: "pointer", textAlign: "left", width: "100%" }}>
+                  <span style={{ color: "var(--terracotta)", fontWeight: 600, marginRight: 10 }}>{String(index + 1).padStart(2, "0")}</span>
+                  <strong style={{ flex: 1, fontSize: 14 }}>{note.title}</strong>
+                  <em style={{ color: "var(--teal)", fontStyle: "normal", fontSize: 12 }}>进入 ↗</em>
                 </button>
               ))}
             </div>
@@ -881,9 +905,12 @@ ${materials}
             </div>
             <div className="recent-list">
               {(navigation?.recent ?? []).slice(0, 8).map((note) => (
-                <button type="button" key={note.path} onClick={() => void openNote(note.path)}>
-                  <span className="file-mark">MD</span>
-                  <span><strong>{note.title}</strong><small>{note.authors.join("、")} · {note.year || shortDate(note.modified)}</small></span>
+                <button type="button" key={note.path} onClick={() => void openNote(note.path)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 6px", border: 0, borderBottom: "1px solid var(--line-light)", background: "transparent", cursor: "pointer", textAlign: "left", width: "100%" }}>
+                  <span style={{ width: 26, height: 26, borderRadius: 5, background: "var(--teal-soft)", color: "var(--teal)", display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700 }}>MD</span>
+                  <span style={{ overflow: "hidden" }}>
+                    <strong style={{ display: "block", fontSize: 13.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{note.title}</strong>
+                    <small style={{ color: "var(--muted)", fontSize: 12 }}>{note.authors.join("、")} · {note.year || shortDate(note.modified)}</small>
+                  </span>
                 </button>
               ))}
             </div>
@@ -893,14 +920,14 @@ ${materials}
     );
   }
 
-  // 2. Dedicated Rulebook & Case Law Hub View (Requirement 6)
+  // 2. Dedicated Rulebook & Case Law Hub View (Requirement 6 - Image 1 Fix)
   function renderRulebook() {
     const hubs = navigation?.rulebookHubs && navigation.rulebookHubs.length > 0 ? navigation.rulebookHubs : [
-      { title: "商标法及案例库", path: "知识产权/法律法规与典型案例/商标/商标.md", caption: "商标法87条、行政法规、解释与典型案例" },
-      { title: "专利法及案例库", path: "知识产权/法律法规与典型案例/专利/专利.md", caption: "专利法82条、实施细则、解释与典型案例" },
-      { title: "著作权法及案例库", path: "知识产权/法律法规与典型案例/著作权/著作权.md", caption: "著作权法67条、实施条例、解释与典型案例" },
-      { title: "通用规则及案例库", path: "知识产权/法律法规与典型案例/知识产权通用规则/知识产权通用规则.md", caption: "管辖、证据、保全、惩罚性赔偿等跨域规则" },
-      { title: "植物新品种", path: "知识产权/法律法规与典型案例/植物新品种/植物新品种.md", caption: "条例49条、司法解释与典型案例" },
+      { title: "商标法及案例库", path: "知识产权/法律法规与典型案例/商标/商标.md", caption: "商标法87条、行政法规、司法解释与典型案例汇编" },
+      { title: "专利法及案例库", path: "知识产权/法律法规与典型案例/专利/专利.md", caption: "专利法82条、实施细则、侵权审查指南与典型案例" },
+      { title: "著作权法及案例库", path: "知识产权/法律法规与典型案例/著作权/著作权.md", caption: "著作权法67条、实施条例、解释与AIGC典型判例" },
+      { title: "通用规则及案例库", path: "知识产权/法律法规与典型案例/知识产权通用规则/知识产权通用规则.md", caption: "管辖、证据、诉中禁令、惩罚性赔偿跨域规则" },
+      { title: "植物新品种", path: "知识产权/法律法规与典型案例/植物新品种/植物新品种.md", caption: "条例49条、司法解释与权威侵权判例要旨" },
       { title: "最高法审判参考", path: "知识产权/法律法规与典型案例/_审判参考/法答网精选答问-第33批·知识产权司法保护专题（2025-12-05）.md", caption: "最高法法答网精选答问知识产权司法保护专题" },
     ];
 
@@ -911,8 +938,8 @@ ${materials}
           <h1>知产法规与典型案例库</h1>
           <p>
             致谢 <strong>@StefanCHEN2026</strong> 的开源贡献与知识库整合。
-            本模块包含 <strong>50 部知识产权现行核心法律法规与司法解释</strong>，以及 <strong>395 篇最高法指导案例与权威裁判要旨</strong>，
-            打通了“法条 ↔ 司法解释 ↔ 典型裁判 ↔ 学者学说”的四维全景双链知识网络。
+            本模块涵盖 <strong>50 部知识产权现行核心法律法规与司法解释</strong>，以及 <strong>395 篇最高法指导案例与权威裁判要旨</strong>，
+            构建起“法条 ↔ 司法解释 ↔ 典型判例 ↔ 学术研讨”的立体双向链接知识网络。
           </p>
           <div className="rulebook-stats-row">
             <div><strong>50 部</strong><span>知产核心法律法规</span></div>
@@ -929,13 +956,21 @@ ${materials}
         <div className="rulebook-grid">
           {hubs.map((hub, index) => (
             <article className="rulebook-hub-card" key={hub.path}>
-              <span className="rulebook-index">R0{index + 1}</span>
-              <h3>{hub.title}</h3>
-              <p>{hub.caption}</p>
-              <div className="rulebook-hub-actions">
-                <button type="button" className="primary-button" onClick={() => void openNote(hub.path)}>在抽屉预览 ↗</button>
-                <button type="button" className="quiet-button" onClick={() => void openInObsidian(hub.path)}>Obsidian 打开</button>
-                <button type="button" className="quiet-button" onClick={() => void copyText(hub.path, "法规库路径已复制。")}>复制路径</button>
+              <div className="hub-card-header">
+                <span className="hub-badge">R0{index + 1}</span>
+                <h3>{hub.title}</h3>
+              </div>
+              <p className="hub-caption">{hub.caption}</p>
+              <div className="hub-actions">
+                <button type="button" className="primary-button" onClick={() => void openNote(hub.path)}>
+                  在抽屉预览 ↗
+                </button>
+                <button type="button" className="outline-button" onClick={() => void openInObsidian(hub.path)}>
+                  Obsidian 打开
+                </button>
+                <button type="button" className="ghost-button" onClick={() => void copyText(hub.path, "法规库路径已复制。")}>
+                  复制路径
+                </button>
               </div>
             </article>
           ))}
@@ -944,7 +979,7 @@ ${materials}
     );
   }
 
-  // 3. CNKI Intake with Dual Mode & Saved Queries (Requirement 5)
+  // 3. CNKI Intake with Dual Mode & Saved Queries (Requirement 5 - Image 2 & 3 Fix)
   function renderIntake() {
     const intakeNotes = navigation?.intake ?? [];
 
@@ -956,15 +991,43 @@ ${materials}
           <p>支持知产名家全量检索与CLSCI核心期刊双模式，自动持久化记录检索式，新采集样板自动进入初筛队列。</p>
         </div>
 
-        <div className="capture-flow">
-          <div><span>01</span><strong>设定检索模式</strong><small>学者模式 vs CLSCI核心期刊</small></div><b>→</b>
-          <div><span>02</span><strong>存为检索式记录</strong><small>记录之前学了什么、检索边界</small></div><b>→</b>
-          <div><span>03</span><strong>知网样板生成</strong><small>record_status: intake</small></div><b>→</b>
-          <div><span>04</span><strong>初筛与Agent</strong><small>纳入、排除、结构化分析</small></div>
+        {/* Elegant Timeline (Fixes Image 2 Flow Cards) */}
+        <div className="capture-flow-timeline">
+          <div className="flow-step">
+            <span className="step-num">01</span>
+            <div className="step-body">
+              <strong>设定检索模式</strong>
+              <small>学者全量 vs CLSCI核心期刊</small>
+            </div>
+          </div>
+          <span className="flow-arrow">›</span>
+          <div className="flow-step">
+            <span className="step-num">02</span>
+            <div className="step-body">
+              <strong>存为检索式记录</strong>
+              <small>记录研究问题、关键词与边界</small>
+            </div>
+          </div>
+          <span className="flow-arrow">›</span>
+          <div className="flow-step">
+            <span className="step-num">03</span>
+            <div className="step-body">
+              <strong>知网样板生成</strong>
+              <small>生成 Obsidian 结构化笔记样板</small>
+            </div>
+          </div>
+          <span className="flow-arrow">›</span>
+          <div className="flow-step">
+            <span className="step-num">04</span>
+            <div className="step-body">
+              <strong>初筛与 Agent 分析</strong>
+              <small>纳入、排除与论证链解构</small>
+            </div>
+          </div>
         </div>
 
         <div className="intake-config-grid">
-          {/* Saved Queries Recorder */}
+          {/* Saved Queries Recorder (Fixes Image 3 Smashing) */}
           <div className="panel-card research-profile-card">
             <div className="panel-head">
               <div><span className="eyebrow">QUERY RECORDER</span><h3>检索式记录</h3></div>
@@ -1010,10 +1073,12 @@ ${materials}
             </div>
 
             <div className="query-save-bar">
-              <button type="button" className="primary-button" onClick={saveCurrentQuery}>
+              <button type="button" className="primary-button save-query-btn" onClick={saveCurrentQuery}>
                 💾 保存当前检索式
               </button>
-              <small>已保存 {savedQueries.length} 个历史检索式</small>
+              <span className="saved-query-count-hint">
+                已存 <strong>{savedQueries.length}</strong> 条历史检索式（可在下方一键调取）
+              </span>
             </div>
 
             {savedQueries.length > 0 && (
@@ -1037,23 +1102,23 @@ ${materials}
           </div>
 
           {/* Dual Retrieval Mode: Author Mode vs Journal Mode */}
-          <div className="journal-section">
+          <div className="journal-section panel-card">
             <div className="panel-head">
               <div><span className="eyebrow">RETRIEVAL MODE</span><h3>两种检索形式</h3></div>
               <div className="mode-toggle-group">
                 <button
                   type="button"
-                  className={spiderMode === "author" ? "active" : ""}
+                  className={`mode-toggle-btn ${spiderMode === "author" ? "active" : ""}`}
                   onClick={() => setSpiderMode("author")}
                 >
-                  作者模式
+                  作者全量模式
                 </button>
                 <button
                   type="button"
-                  className={spiderMode === "journal" ? "active" : ""}
+                  className={`mode-toggle-btn ${spiderMode === "journal" ? "active" : ""}`}
                   onClick={() => setSpiderMode("journal")}
                 >
-                  期刊模式
+                  CLSCI 核心期刊模式
                 </button>
               </div>
             </div>
@@ -1061,7 +1126,7 @@ ${materials}
             {spiderMode === "author" ? (
               <div className="mode-card">
                 <span className="eyebrow">AUTHOR MODE · 知产名家全量检索</span>
-                <p>聚焦知产学界代表性学者全量文献，穿透作者学术成长与研究路径流变：</p>
+                <p style={{ margin: "4px 0 10px", color: "var(--muted)", fontSize: 13.5 }}>聚焦知产学界代表性学者全量文献，穿透作者学术成长与研究路径流变：</p>
                 <div className="author-tags">
                   {FAMOUS_AUTHORS.map((author) => (
                     <button
@@ -1083,19 +1148,20 @@ ${materials}
               <div className="mode-card">
                 <div className="panel-head" style={{ marginBottom: 8 }}>
                   <span className="eyebrow">JOURNAL MODE · CLSCI核心期刊模式</span>
-                  <label className="switch-label">
+                  <label className="switch-label" style={{ fontSize: 12.5 }}>
                     <input type="checkbox" checked={strictJournal} onChange={(e) => setStrictJournal(e.target.checked)} />
-                    <span />严格匹配
+                    严格匹配
                   </label>
                 </div>
-                <div className="journal-add">
+                <div className="journal-add" style={{ display: "flex", gap: 8, margin: "12px 0" }}>
                   <input
                     value={newJournal}
                     onChange={(e) => setNewJournal(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") addJournal(); }}
-                    placeholder="手动输入新增期刊"
+                    placeholder="手动输入新增期刊名称"
+                    style={{ flex: 1, padding: "8px 12px", border: "1px solid var(--line)", borderRadius: 8, fontSize: 13 }}
                   />
-                  <button type="button" onClick={addJournal}>＋ 加入</button>
+                  <button type="button" className="outline-button" onClick={addJournal}>＋ 加入</button>
                 </div>
                 <div className="journal-grid">
                   {journals.map((journal) => (
@@ -1105,15 +1171,9 @@ ${materials}
                         type="button"
                         onClick={() => setJournals((cur) => cur.map((item) => item.id === journal.id ? { ...item, enabled: !item.enabled } : item))}
                       >
-                        <span>{journal.enabled ? "✓" : ""}</span>
-                        <strong>{journal.name}</strong>
+                        <strong>{journal.enabled ? "✓ " : ""}{journal.name}</strong>
                         <small>{journal.custom ? "手动加入" : "法学核心"}</small>
                       </button>
-                      {journal.custom && (
-                        <button className="journal-remove" type="button" onClick={() => setJournals((cur) => cur.filter((item) => item.id !== journal.id))}>
-                          删除
-                        </button>
-                      )}
                     </article>
                   ))}
                 </div>
@@ -1140,47 +1200,48 @@ ${materials}
           <div><span className="eyebrow">INTAKE QUEUE</span><h2>Obsidian 待处理样板</h2></div>
           <span>{intakeNotes.length} 篇待处理样板</span>
         </div>
-        <div className="intake-queue">
+        <div className="intake-queue" style={{ display: "grid", gap: 12 }}>
           {intakeNotes.map((note) => (
-            <article className="intake-card" key={note.path}>
+            <article className="intake-card panel-card" key={note.path} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center" }}>
               <div className="intake-card-main">
-                <span className={`status-chip ${note.metadataStatus === "ready" ? "ready" : "pending"}`}>
+                <span className={`status-badge ${note.metadataStatus === "ready" ? "verified" : "neutral"}`}>
                   {note.metadataStatus === "ready" ? "元数据齐备" : "字段待补"}
                 </span>
-                <h3>{note.title}</h3>
-                <p>{note.summary || "已建立空白样板，等待摘要或全文结构化分析。"}</p>
-                <small>{note.authors.join("、") || "作者待补"} · {note.journal || "刊物待补"} · {note.year || "年份待补"}</small>
+                <h3 style={{ margin: "8px 0 6px", fontSize: 17, fontFamily: "Georgia, Songti SC, serif" }}>{note.title}</h3>
+                <p style={{ color: "var(--muted)", fontSize: 13.5, margin: "0 0 6px", lineHeight: 1.65 }}>{note.summary || "已建立空白样板，等待摘要或全文结构化分析。"}</p>
+                <small style={{ color: "var(--muted-light)", fontSize: 12 }}>{note.authors.join("、") || "作者待补"} · {note.journal || "刊物待补"} · {note.year || "年份待补"}</small>
               </div>
-              <div className="intake-review">
+              <div className="intake-review" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input
                   aria-label={`${note.title}筛选理由`}
                   value={screeningReasons[note.path] || ""}
                   onChange={(e) => setScreeningReasons((cur) => ({ ...cur, [note.path]: e.target.value }))}
                   placeholder="填写纳入、排除或待定理由"
+                  style={{ padding: "6px 10px", fontSize: 12.5 }}
                 />
-                <div>
-                  <button type="button" className="accept" onClick={() => void screenIntake(note, "included")}>纳入</button>
-                  <button type="button" onClick={() => void screenIntake(note, "pending")}>待定</button>
-                  <button type="button" className="reject" onClick={() => void screenIntake(note, "excluded")}>排除</button>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button type="button" className="action-btn" style={{ background: "var(--teal-soft)", color: "var(--teal)" }} onClick={() => void screenIntake(note, "included")}>纳入</button>
+                  <button type="button" className="action-btn" onClick={() => void screenIntake(note, "pending")}>待定</button>
+                  <button type="button" className="action-btn" style={{ background: "var(--terracotta-soft)", color: "var(--terracotta)" }} onClick={() => void screenIntake(note, "excluded")}>排除</button>
                 </div>
-                <div>
-                  <button type="button" onClick={() => toggleContext(note.path)}>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button type="button" className="action-btn" onClick={() => toggleContext(note.path)}>
                     {contextPaths.includes(note.path) ? "已加入Agent" : "+ Agent材料"}
                   </button>
-                  <button type="button" onClick={() => void openInObsidian(note.path)}>打开样板 ↗</button>
+                  <button type="button" className="action-btn" onClick={() => void openInObsidian(note.path)}>打开样板 ↗</button>
                 </div>
               </div>
             </article>
           ))}
           {!intakeNotes.length && (
-            <div className="empty-state panel-card">尚无新采集样板。启动爬虫后，样板会自动出现在这里。</div>
+            <div className="empty-state panel-card" style={{ padding: 36, textAlign: "center", color: "var(--muted)" }}>尚无新采集样板。启动爬虫后，样板会自动出现在这里。</div>
           )}
         </div>
       </section>
     );
   }
 
-  // 4. Library View with 15 Per Page Pagination (Requirement 4)
+  // 4. Library View with 15 Per Page Pagination (Requirement 4 - Image 4 Fix)
   function renderLibrary() {
     const filters: Array<[LibraryFilter, string, number]> = [
       ["all", "全部论文", navigation?.stats.papers ?? 0],
@@ -1229,15 +1290,15 @@ ${materials}
             </div>
           </div>
 
-          <div className="note-table-head">
-            <span>笔记</span>
-            <span>作者／领域</span>
-            <span>年份</span>
-            <span>状态</span>
-            <span>操作</span>
-          </div>
-
           <div className="note-table">
+            <div className="note-table-head">
+              <span>笔记题名</span>
+              <span>作者／领域</span>
+              <span style={{ textAlign: "center" }}>年份</span>
+              <span>状态</span>
+              <span style={{ textAlign: "right" }}>操作</span>
+            </div>
+
             {pagedNotes.map((note) => (
               <article className="note-row" key={note.path}>
                 <button className="note-title" type="button" onClick={() => void openNote(note.path)}>
@@ -1245,19 +1306,19 @@ ${materials}
                   <small>{note.path}</small>
                 </button>
                 <span>
-                  {note.authors.join("、") || "作者待补"}
+                  {note.authors.join("、") || "作者待核"}
                   <small>{note.domain || note.journal || "领域待补"}</small>
                 </span>
-                <span>{note.year || "—"}</span>
+                <span className="note-year">{note.year || "—"}</span>
                 <span>
-                  <i className={note.isFormal ? "verified" : "neutral"}>
+                  <i className={`status-badge ${note.isFormal ? "verified" : "neutral"}`}>
                     {note.isFormal ? "规范记录" : note.warning || "待整理"}
                   </i>
                 </span>
                 {noteActions(note)}
               </article>
             ))}
-            {!pagedNotes.length && <div className="empty-state">当前筛选下没有匹配笔记。</div>}
+            {!pagedNotes.length && <div className="empty-state" style={{ padding: 40, textAlign: "center", color: "var(--muted)" }}>当前筛选下没有匹配笔记。</div>}
           </div>
 
           {/* Pagination Controls: 15 per page */}
@@ -1317,29 +1378,29 @@ ${materials}
           <p>立足法学核心争议焦点，梳理学术流派与作者研究脉络，支持观点证据对齐与双链下钻。</p>
         </div>
 
-        <div className="relation-method-grid">
-          <article>
-            <span>01 · CNKI</span>
-            <strong>直接引证</strong>
-            <p>参考文献、被引与施引线索，只证明书目联系。</p>
+        <div className="relation-method-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, margin: "16px 0 24px" }}>
+          <article className="panel-card">
+            <span className="eyebrow">01 · CNKI</span>
+            <strong style={{ display: "block", fontSize: 17, margin: "8px 0 6px" }}>直接引证</strong>
+            <p style={{ color: "var(--muted)", fontSize: 13.5, margin: 0, lineHeight: 1.65 }}>参考文献、被引与施引线索，只证明书目联系。</p>
           </article>
-          <article>
-            <span>02 · FULL TEXT</span>
-            <strong>明确对话</strong>
-            <p>正文证据支持 supports、opposes、qualifies、extends。</p>
+          <article className="panel-card">
+            <span className="eyebrow">02 · FULL TEXT</span>
+            <strong style={{ display: "block", fontSize: 17, margin: "8px 0 6px" }}>明确对话</strong>
+            <p style={{ color: "var(--muted)", fontSize: 13.5, margin: 0, lineHeight: 1.65 }}>正文证据支持 supports、opposes、qualifies、extends。</p>
           </article>
-          <article>
-            <span>03 · RESEARCHER</span>
-            <strong>平行比较</strong>
-            <p>共同概念或方法必须标记为系统构造，不冒充作者争论。</p>
+          <article className="panel-card">
+            <span className="eyebrow">03 · RESEARCHER</span>
+            <strong style={{ display: "block", fontSize: 17, margin: "8px 0 6px" }}>平行比较</strong>
+            <p style={{ color: "var(--muted)", fontSize: 13.5, margin: 0, lineHeight: 1.65 }}>共同概念或方法必须标记为系统构造，不冒充作者争论。</p>
           </article>
         </div>
 
-        <div className="relation-selection panel-card">
+        <div className="relation-selection panel-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36 }}>
           <div>
             <span className="eyebrow">MATRIX MATERIALS</span>
-            <h3>已选 {selectedRecords.length} 篇研究材料</h3>
-            <p>{selectedRecords.length ? selectedRecords.map((n) => n.title).join(" · ") : "请在论文目录或待处理队列勾选材料（无数量限制）。"}</p>
+            <h3 style={{ margin: "4px 0 6px" }}>已选 {selectedRecords.length} 篇研究材料</h3>
+            <p style={{ color: "var(--muted)", fontSize: 14, margin: 0 }}>{selectedRecords.length ? selectedRecords.map((n) => n.title).join(" · ") : "请在论文目录或待处理队列勾选材料（无数量限制）。"}</p>
           </div>
           <button
             className="primary-button"
@@ -1355,19 +1416,19 @@ ${materials}
           <div><span className="eyebrow">CONTROVERSIES</span><h2>现有争议焦点</h2></div>
           <span>全库精选知产学术争议命题</span>
         </div>
-        <div className="topic-grid">
+        <div className="topic-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
           {(navigation?.controversies ?? []).map((note, index) => (
-            <article className="topic-card" key={note.path}>
-              <span className="topic-number">{String(index + 1).padStart(2, "0")}</span>
+            <article className="topic-card panel-card" key={note.path}>
+              <span style={{ color: "var(--terracotta)", font: "italic 16px Georgia, serif", fontWeight: 700 }}>{String(index + 1).padStart(2, "0")}</span>
               <div>
-                <small>{note.type}</small>
-                <h3>{note.title}</h3>
-                <p>{note.summary}</p>
+                <small style={{ color: "var(--teal)", fontWeight: 650, fontSize: 12 }}>{note.type}</small>
+                <h3 style={{ margin: "8px 0", fontSize: 19 }}>{note.title}</h3>
+                <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.7 }}>{note.summary}</p>
               </div>
-              <div className="topic-actions">
-                <button type="button" onClick={() => void openNote(note.path)}>摘要与双链</button>
-                <button type="button" onClick={() => void openInObsidian(note.path)}>Obsidian ↗</button>
-                <button type="button" onClick={() => toggleContext(note.path)}>
+              <div className="topic-actions" style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                <button type="button" className="quiet-button" onClick={() => void openNote(note.path)}>摘要与双链</button>
+                <button type="button" className="outline-button" onClick={() => void openInObsidian(note.path)}>Obsidian ↗</button>
+                <button type="button" className="quiet-button" onClick={() => toggleContext(note.path)}>
                   {contextPaths.includes(note.path) ? "已选材料" : "+ Agent材料"}
                 </button>
               </div>
@@ -1380,19 +1441,19 @@ ${materials}
           <div><span className="eyebrow">SCHOLAR TRAJECTORIES</span><h2>作者研究路径</h2></div>
           <span>知名知产学者学术脉络与代表作序列（崔国斌、蒋舸、冯术杰、吴伟光等）</span>
         </div>
-        <div className="topic-grid">
+        <div className="topic-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
           {(navigation?.researchPaths ?? []).map((note, index) => (
-            <article className="topic-card path-card" key={note.path}>
-              <span className="topic-number">{String(index + 1).padStart(2, "0")}</span>
+            <article className="topic-card panel-card" key={note.path}>
+              <span style={{ color: "var(--terracotta)", font: "italic 16px Georgia, serif", fontWeight: 700 }}>{String(index + 1).padStart(2, "0")}</span>
               <div>
-                <small>作者研究路径</small>
-                <h3>{note.title}</h3>
-                <p>{note.summary}</p>
+                <small style={{ color: "var(--purple)", fontWeight: 650, fontSize: 12 }}>作者研究路径</small>
+                <h3 style={{ margin: "8px 0", fontSize: 19 }}>{note.title}</h3>
+                <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.7 }}>{note.summary}</p>
               </div>
-              <div className="topic-actions">
-                <button type="button" onClick={() => void openNote(note.path)}>阅读路径</button>
-                <button type="button" onClick={() => void openInObsidian(note.path)}>Obsidian ↗</button>
-                <button type="button" onClick={() => toggleContext(note.path)}>
+              <div className="topic-actions" style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                <button type="button" className="quiet-button" onClick={() => void openNote(note.path)}>阅读路径</button>
+                <button type="button" className="outline-button" onClick={() => void openInObsidian(note.path)}>Obsidian ↗</button>
+                <button type="button" className="quiet-button" onClick={() => toggleContext(note.path)}>
                   {contextPaths.includes(note.path) ? "已选材料" : "+ Agent材料"}
                 </button>
               </div>
@@ -1418,24 +1479,25 @@ ${materials}
           <h1>引注中心</h1>
           <p>书目信息来自 Obsidian YAML，具体观点页码由你依据 PDF 核验。系统不会猜测缺失的作者、期号或页码。</p>
         </div>
-        <div className="citation-layout">
+        <div className="citation-layout" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div className="panel-card citation-form">
             <div className="panel-head">
               <div><span className="eyebrow">SOURCE</span><h3>选择论文与引用方式</h3></div>
               <span>{active?.citationStatus || "等待选择"}</span>
             </div>
-            <label className="citation-search-filter">
+            <label className="citation-search-filter" style={{ display: "block", marginBottom: 14 }}>
               快速筛选论文
               <input
                 type="text"
                 value={citationSearchQuery}
                 onChange={(e) => setCitationSearchQuery(e.target.value)}
                 placeholder="搜索题名、作者关键词快速过滤..."
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid var(--line)", marginTop: 6, fontSize: 13.5 }}
               />
             </label>
-            <label>
+            <label style={{ display: "block", marginBottom: 14 }}>
               论文 ({papers.length} 篇可用)
-              <select value={citationPath} onChange={(e) => { setCitationPath(e.target.value); setCitationResult(null); }}>
+              <select value={citationPath} onChange={(e) => { setCitationPath(e.target.value); setCitationResult(null); }} style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid var(--line)", marginTop: 6, fontSize: 13.5, background: "#fff" }}>
                 <option value="">请选择论文</option>
                 {papers.map((note) => (
                   <option value={note.path} key={note.path}>
@@ -1444,10 +1506,10 @@ ${materials}
                 ))}
               </select>
             </label>
-            <div className="field-row">
+            <div className="field-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
               <label>
                 用途
-                <select value={citationMode} onChange={(e) => setCitationMode(e.target.value as typeof citationMode)}>
+                <select value={citationMode} onChange={(e) => setCitationMode(e.target.value as typeof citationMode)} style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid var(--line)", marginTop: 6, fontSize: 13.5, background: "#fff" }}>
                   <option value="paraphrase">转述观点（参见）</option>
                   <option value="direct">直接引语</option>
                   <option value="general">整篇文献列示</option>
@@ -1460,18 +1522,19 @@ ${materials}
                   value={pinpointPage}
                   onChange={(e) => setPinpointPage(e.target.value)}
                   placeholder={citationMode === "general" ? "可留空" : "例如 163 或 163-165"}
+                  style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid var(--line)", marginTop: 6, fontSize: 13.5 }}
                 />
               </label>
             </div>
             {active && (
-              <div className="citation-metadata">
-                <span>{active.journal || "刊物待补"}</span>
-                <span>{active.year || "年份待补"}年{active.issue ? `第${active.issue}期` : ""}</span>
-                <span>{active.pageRange ? `全文 ${active.pageRange} 页` : "起止页待补"}</span>
-                {(active.pdfLink || active.sourcePdf) && <span style={{ color: "var(--teal)", fontWeight: 650 }}>📄 PDF 已关联</span>}
+              <div className="citation-metadata" style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "14px 0" }}>
+                <span className="status-badge neutral">{active.journal || "刊物待补"}</span>
+                <span className="status-badge neutral">{active.year || "年份待补"}年{active.issue ? `第${active.issue}期` : ""}</span>
+                <span className="status-badge neutral">{active.pageRange ? `全文 ${active.pageRange} 页` : "起止页待补"}</span>
+                {(active.pdfLink || active.sourcePdf) && <span className="status-badge verified">📄 PDF 已关联</span>}
               </div>
             )}
-            <button className="primary-button" type="button" onClick={() => void renderCitation()}>生成法学脚注</button>
+            <button className="primary-button" type="button" style={{ marginTop: 10 }} onClick={() => void renderCitation()}>生成法学脚注</button>
           </div>
 
           <div className="panel-card citation-output">
@@ -1481,21 +1544,21 @@ ${materials}
             </div>
             {citationResult ? (
               <>
-                <div className="citation-preview">
-                  <strong>{citationResult.citation}</strong>
-                  <small>状态：{citationResult.verification === "pinpoint_unverified" ? "页码由用户输入，仍需回看PDF" : "书目信息已生成"}</small>
+                <div className="citation-preview" style={{ background: "var(--teal-soft)", borderLeft: "4px solid var(--teal)", padding: "18px 20px", borderRadius: "0 10px 10px 0" }}>
+                  <strong style={{ display: "block", fontSize: 16, lineHeight: 1.7, color: "var(--ink)" }}>{citationResult.citation}</strong>
+                  <small style={{ display: "block", marginTop: 8, color: "var(--teal)", fontSize: 12 }}>状态：{citationResult.verification === "pinpoint_unverified" ? "页码由用户输入，仍需回看PDF" : "书目信息已生成"}</small>
                 </div>
-                <div className="citation-actions">
-                  <button type="button" onClick={() => void copyText(citationResult.citation, "Word脚注文本已复制。")}>复制 Word 脚注</button>
-                  <button type="button" onClick={() => void copyText(citationResult.markdownFootnote || `${citationResult.obsidianMarker}\n${citationResult.obsidianDefinition}`, "Obsidian脚注已复制。")}>复制 Obsidian 脚注</button>
+                <div className="citation-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 16 }}>
+                  <button type="button" className="action-btn" onClick={() => void copyText(citationResult.citation, "Word脚注文本已复制。")}>复制 Word 脚注</button>
+                  <button type="button" className="action-btn" onClick={() => void copyText(citationResult.markdownFootnote || `${citationResult.obsidianMarker}\n${citationResult.obsidianDefinition}`, "Obsidian脚注已复制。")}>复制 Obsidian 脚注</button>
                   {citationResult.shortCitation && (
-                    <button type="button" onClick={() => void copyText(citationResult.shortCitation!, "前引文短注已复制。")}>复制前引文</button>
+                    <button type="button" className="action-btn" onClick={() => void copyText(citationResult.shortCitation!, "前引文短注已复制。")}>复制前引文</button>
                   )}
-                  {active && <button type="button" onClick={() => void openInObsidian(active.path)}>回到原笔记 ↗</button>}
+                  {active && <button type="button" className="action-btn" onClick={() => void openInObsidian(active.path)}>回到原笔记 ↗</button>}
                 </div>
               </>
             ) : (
-              <div className="context-empty">选择论文并填写具体页码后生成。字段缺失时，系统会明确提示而不会补猜。</div>
+              <div className="context-empty" style={{ padding: 40, textAlign: "center", color: "var(--muted)", background: "#faf8f2", borderRadius: 10 }}>选择论文并填写具体页码后生成。字段缺失时，系统会明确提示而不会补猜。</div>
             )}
           </div>
         </div>
@@ -1503,7 +1566,7 @@ ${materials}
     );
   }
 
-  // 7. Agent Prompt 清单 (Requirement 1)
+  // 7. Agent Prompt 清单 (Requirement 1 - Image 5 Fix)
   function renderAgents() {
     const selectedRecords = contextPaths.map((path) => navigation?.searchNotes.find((note) => note.path === path)).filter(Boolean) as NoteRecord[];
     const activePrompt = CORE_PROMPTS[selectedPromptKey];
@@ -1543,37 +1606,38 @@ ${materials}
           </div>
         </div>
 
-        {/* Prompt Selection Tabs */}
-        <div className="prompt-tabs">
+        {/* Prompt Selection Tabs (Fixed Text Concatenation Bug) */}
+        <div className="prompt-tabs-bar">
           {(["paper", "controversy", "trend"] as const).map((key) => (
             <button
               key={key}
               type="button"
-              className={`prompt-tab-btn ${selectedPromptKey === key ? "active" : ""}`}
+              className={`prompt-tab-item ${selectedPromptKey === key ? "active" : ""}`}
               onClick={() => setSelectedPromptKey(key)}
             >
-              <span className="tab-tag">{CORE_PROMPTS[key].tag}</span>
-              <strong>{CORE_PROMPTS[key].name}</strong>
+              <span className="tab-badge">{CORE_PROMPTS[key].tag}</span>
+              <span className="tab-title">{CORE_PROMPTS[key].name}</span>
+              <small className="tab-sub">（{CORE_PROMPTS[key].subtitle}）</small>
             </button>
           ))}
         </div>
 
         {/* Active Prompt Card */}
         <div className="prompt-card">
-          <div className="panel-head">
+          <div className="prompt-card-header">
             <div>
-              <span className="eyebrow">{CORE_PROMPTS[selectedPromptKey].tag} · PROMPT TEMPLATE</span>
-              <h3>{activePrompt.name}</h3>
+              <span className="eyebrow">{activePrompt.tag} · 任务模板</span>
+              <h3>{activePrompt.name} <small>（{activePrompt.subtitle}）</small></h3>
+              <p className="prompt-desc-text">{activePrompt.desc}</p>
             </div>
             <button
               type="button"
-              className="primary-button"
+              className="primary-button copy-prompt-btn"
               onClick={() => void copyText(activePrompt.template, "Prompt 模板已复制到剪贴板！")}
             >
               📋 复制本条 Prompt
             </button>
           </div>
-          <p className="prompt-desc-text">{activePrompt.desc}</p>
           <div className="prompt-content-box">
             <pre>{activePrompt.template}</pre>
           </div>
@@ -1598,7 +1662,7 @@ ${materials}
                 </div>
               ))
             ) : (
-              <div className="context-empty">请在论文目录、争议专题或阅读历史中勾选材料（已去除数量上限）。</div>
+              <div className="context-empty" style={{ padding: 24, textAlign: "center", color: "var(--muted)", background: "#faf8f2", borderRadius: 8 }}>请在论文目录、争议专题或阅读历史中勾选材料（已去除数量上限）。</div>
             )}
           </div>
 
@@ -1629,7 +1693,7 @@ ${materials}
         </div>
 
         {/* Agent API Integration Window */}
-        <div className="panel-card api-workbench-card">
+        <div className="api-workbench-card">
           <div className="panel-head">
             <div>
               <span className="eyebrow">AGENT API WINDOW</span>
@@ -1637,7 +1701,7 @@ ${materials}
             </div>
             <span>直连大模型服务</span>
           </div>
-          <p style={{ color: "var(--muted)", margin: "4px 0 16px" }}>
+          <p style={{ color: "var(--muted)", margin: "4px 0 16px", fontSize: 14 }}>
             可在此配置你的大模型 API 端点，支持一键注入已选文献与《法学论文整理SOP》进行自动化文献整理与学术争点分析。
           </p>
           <div className="api-form-grid">
@@ -1685,8 +1749,8 @@ ${materials}
           </div>
 
           {agentApiOutput && (
-            <div className="api-output-box" style={{ marginTop: "16px" }}>
-              <span className="eyebrow">AGENT 响应控制台</span>
+            <div className="api-output-box">
+              <span className="eyebrow" style={{ color: "#92e0c2" }}>AGENT 响应控制台</span>
               <pre>{agentApiOutput}</pre>
             </div>
           )}
@@ -1736,23 +1800,23 @@ ${materials}
         <div className="forked-grid">
           {forkedItems.map((item) => (
             <article className="history-card" key={item.path}>
-              <span className="fork-badge">★ Forked</span>
+              <span className="fork-badge">★ 重点收藏</span>
               <h3>{item.title}</h3>
               <p>{item.authors.join("、") || "作者待核"} · {item.journal || item.domain || "期刊"} {item.year ? `(${item.year})` : ""}</p>
               <small>{new Date(item.timestamp).toLocaleString()} · {item.path}</small>
               <div className="history-card-actions">
-                <button type="button" onClick={() => void openNote(item.path)}>预览 ↗</button>
-                <button type="button" onClick={() => void openInObsidian(item.path)}>Obsidian</button>
-                <button type="button" onClick={() => toggleContext(item.path)}>
+                <button type="button" className="action-btn" onClick={() => void openNote(item.path)}>预览 ↗</button>
+                <button type="button" className="action-btn" onClick={() => void openInObsidian(item.path)}>Obsidian</button>
+                <button type="button" className="action-btn" onClick={() => toggleContext(item.path)}>
                   {contextPaths.includes(item.path) ? "已选材料" : "+ Agent材料"}
                 </button>
-                <button type="button" className="remove-btn" onClick={() => toggleFork(item.path)}>取消Fork</button>
+                <button type="button" className="action-btn" style={{ color: "var(--terracotta)" }} onClick={() => toggleFork(item.path)}>取消重点</button>
               </div>
             </article>
           ))}
           {!forkedItems.length && (
-            <div className="empty-state panel-card">
-              暂无 Fork 标星文献。在论文目录或阅读抽屉中点击「☆ Fork」即可一键将重点文献收录至此。
+            <div className="empty-state panel-card" style={{ padding: 36, textAlign: "center", color: "var(--muted)" }}>
+              暂无 Fork 重点文献。在论文目录或阅读抽屉中点击「☆ 收藏」即可一键将重点文献收录至此。
             </div>
           )}
         </div>
@@ -1770,18 +1834,18 @@ ${materials}
                 <small>{item.authors.join("、") || "作者待核"} · {item.journal || "刊物待核"} {item.year ? `(${item.year})` : ""} · {new Date(item.timestamp).toLocaleTimeString()}</small>
               </div>
               <div className="history-actions">
-                <button type="button" onClick={() => void openNote(item.path)}>预览</button>
-                <button type="button" className={item.forked ? "forked" : ""} onClick={() => toggleFork(item.path)}>
-                  {item.forked ? "★ 已Fork" : "☆ Fork"}
+                <button type="button" className="action-btn" onClick={() => void openNote(item.path)}>预览</button>
+                <button type="button" className={`action-btn ${item.forked ? "action-fork forked" : ""}`} onClick={() => toggleFork(item.path)}>
+                  {item.forked ? "★ 重点" : "☆ 收藏"}
                 </button>
-                <button type="button" onClick={() => toggleContext(item.path)}>
-                  {contextPaths.includes(item.path) ? "已选材料" : "+ Agent材料"}
+                <button type="button" className="action-btn" onClick={() => toggleContext(item.path)}>
+                  {contextPaths.includes(item.path) ? "已选材料" : "+ 材料"}
                 </button>
               </div>
             </article>
           ))}
           {!readHistory.length && (
-            <div className="empty-state panel-card">
+            <div className="empty-state panel-card" style={{ padding: 36, textAlign: "center", color: "var(--muted)" }}>
               尚无阅读足迹。点击论文阅读后，足迹会自动生成并留存。
             </div>
           )}
@@ -1792,7 +1856,7 @@ ${materials}
           <div><span className="eyebrow">RESEARCH PACKAGE EXPORT</span><h2>研究包导出与复核</h2></div>
           <span>支持多格式导出已选材料、阅读历史与引注</span>
         </div>
-        <div className="export-layout">
+        <div className="export-layout" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div className="panel-card export-manifest">
             <div className="panel-head">
               <div><span className="eyebrow">MANIFEST</span><h3>本次已选材料</h3></div>
@@ -1810,20 +1874,20 @@ ${materials}
                 </div>
               ))
             ) : (
-              <div className="context-empty">尚未选择材料，可在论文目录或足迹中点击「+ Agent材料」添加。</div>
+              <div className="context-empty" style={{ padding: 24, textAlign: "center", color: "var(--muted)", background: "#faf8f2", borderRadius: 8 }}>尚未选择材料，可在论文目录或足迹中点击「+ 材料」添加。</div>
             )}
           </div>
 
           <div className="panel-card audit-card">
             <span className="eyebrow">AUDIT & EXPORT</span>
             <h3>导出研究成果</h3>
-            <ul>
+            <ul style={{ paddingLeft: 20, color: "var(--muted)", fontSize: 14, lineHeight: 2 }}>
               <li>所选论文的 Obsidian 路径与书目元数据（无篇数限制）</li>
               <li>历史研读足迹与重点 Fork 论文汇总</li>
               <li>最新生成的法学引注（遵照《法学引注手册》）</li>
               <li>SOP 规范复核备忘与回看 PDF 指引</li>
             </ul>
-            <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+            <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
               <button
                 className="primary-button"
                 type="button"
@@ -1891,17 +1955,18 @@ ${materials}
 
       {/* Main Shell */}
       <div className="main-shell">
-        {/* Topbar: Clean layout without global search bar (Requirement 8) */}
+        {/* Topbar: Clean layout without global search bar */}
         <header className="topbar">
-          <div className="topbar-title">
-            <strong>{currentNav?.label}</strong>
-            <span>{currentNav?.caption}</span>
+          <div className="topbar-breadcrumb">
+            <span className="breadcrumb-nav">{currentNav?.label}</span>
+            <span className="breadcrumb-sep">/</span>
+            <span className="breadcrumb-caption">{currentNav?.caption}</span>
           </div>
           <div className="top-actions">
             <span className="auto-update-label"><i />10秒自动检查</span>
-            <button type="button" onClick={() => void loadNavigation()}>↻ 刷新</button>
+            <button type="button" className="top-refresh-btn" onClick={() => void loadNavigation()}>↻ 刷新</button>
             <button className="obsidian-button" type="button" onClick={() => void openInObsidian("知识产权/00_知识产权研究导航.md")}>
-              OB&nbsp; 原生导航
+              OB&nbsp; 原生导航 ↗
             </button>
           </div>
         </header>
@@ -1909,10 +1974,10 @@ ${materials}
         {/* Content Area */}
         <div className="content-shell">
           {bridgeState === "offline" && (
-            <div className="connection-warning">
+            <div className="connection-warning" style={{ marginBottom: 20, padding: "14px 18px", border: "1px solid #ecc9bd", background: "#fef3ee", borderRadius: 10, display: "flex", alignItems: "center", gap: 14, color: "#8a3b25", fontSize: 13.5 }}>
               <strong>本机工作台尚未启动</strong>
-              <span>请双击“启动LexTrace.command”；原生 Obsidian 导航仍可独立使用。</span>
-              <button type="button" onClick={() => void loadNavigation()}>重新连接</button>
+              <span style={{ flex: 1 }}>请双击“启动LexTrace.command”；原生 Obsidian 导航仍可独立使用。</span>
+              <button type="button" className="primary-button" style={{ background: "#8a3b25" }} onClick={() => void loadNavigation()}>重新连接</button>
             </div>
           )}
           {view === "overview" && renderOverview()}
@@ -1938,29 +2003,29 @@ ${materials}
               <div className="drawer-title">
                 <small>{selectedNote.path}</small>
                 <h2>{selectedNote.title}</h2>
-                <div>
-                  {selectedNote.authors.map((author) => <span key={author}>{author}</span>)}
-                  {selectedNote.year && <span>{selectedNote.year}</span>}
-                  {selectedNote.journal && <span>{selectedNote.journal}</span>}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {selectedNote.authors.map((author) => <span key={author} className="status-badge neutral">{author}</span>)}
+                  {selectedNote.year && <span className="status-badge neutral">{selectedNote.year}</span>}
+                  {selectedNote.journal && <span className="status-badge neutral">{selectedNote.journal}</span>}
                 </div>
               </div>
               <div className="drawer-actions">
                 <button className="primary-button" type="button" onClick={() => void openInObsidian(selectedNote.path)}>
-                  在 Obsidian 阅读全文
+                  在 Obsidian 阅读全文 ↗
                 </button>
                 <button
-                  className={contextPaths.includes(selectedNote.path) ? "quiet-button selected" : "quiet-button"}
+                  className={contextPaths.includes(selectedNote.path) ? "action-btn action-select selected" : "action-btn"}
                   type="button"
                   onClick={() => toggleContext(selectedNote.path)}
                 >
                   {contextPaths.includes(selectedNote.path) ? "已选材料" : "+ Agent材料"}
                 </button>
                 <button
-                  className={readHistory.some((h) => h.path === selectedNote.path && h.forked) ? "quiet-button forked" : "quiet-button"}
+                  className={readHistory.some((h) => h.path === selectedNote.path && h.forked) ? "action-btn action-fork forked" : "action-btn"}
                   type="button"
                   onClick={() => toggleFork(selectedNote.path)}
                 >
-                  {readHistory.some((h) => h.path === selectedNote.path && h.forked) ? "★ 已Fork" : "☆ Fork标星"}
+                  {readHistory.some((h) => h.path === selectedNote.path && h.forked) ? "★ 已重点收藏" : "☆ 重点收藏"}
                 </button>
                 <button className="quiet-button" type="button" onClick={() => void copyText(selectedNote.path, "笔记路径已复制。")}>
                   复制路径
@@ -1968,30 +2033,31 @@ ${materials}
               </div>
 
               {selectedNote.isPaper && (
-                <div className="drawer-citation-box">
-                  <div className="drawer-citation-header">
+                <div className="drawer-citation-box" style={{ margin: "18px 0", border: "1px solid var(--line)", borderRadius: 12, background: "#faf8f2", padding: 18 }}>
+                  <div className="drawer-citation-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span className="eyebrow">LEGAL CITATION · 《法学引注手册》</span>
-                    <button type="button" className="drawer-cite-open-btn" onClick={() => void openQuickCitation(selectedNote)}>
+                    <button type="button" className="drawer-cite-open-btn" style={{ border: 0, background: "transparent", color: "var(--teal)", cursor: "pointer", fontSize: 12.5, fontWeight: 700 }} onClick={() => void openQuickCitation(selectedNote)}>
                       精确引注弹窗 ↗
                     </button>
                   </div>
                   <div className="drawer-citation-body">
-                    <p className="drawer-citation-text">{buildSimpleCitation(selectedNote)}</p>
-                    <div className="drawer-citation-actions">
-                      <button type="button" onClick={() => void copyText(buildSimpleCitation(selectedNote), "Word 脚注已复制到剪贴板！")}>
+                    <p className="drawer-citation-text" style={{ font: "500 15px/1.75 Georgia, Songti SC, serif", color: "var(--ink)", margin: "10px 0 14px" }}>{buildSimpleCitation(selectedNote)}</p>
+                    <div className="drawer-citation-actions" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      <button type="button" className="action-btn" onClick={() => void copyText(buildSimpleCitation(selectedNote), "Word 脚注已复制到剪贴板！")}>
                         复制 Word 脚注
                       </button>
                       <button
                         type="button"
+                        className="action-btn"
                         onClick={() => void copyText(`[^${selectedNote.recordId || "cite"}]: ${buildSimpleCitation(selectedNote)}`, "Markdown 脚注已复制到剪贴板！")}
                       >
                         复制 Markdown 脚注
                       </button>
-                      <button type="button" onClick={() => void copyText(`${selectedNote.authors.join("、") || "作者待核"}前引文。`, "前引文已复制！")}>
+                      <button type="button" className="action-btn" onClick={() => void copyText(`${selectedNote.authors.join("、") || "作者待核"}前引文。`, "前引文已复制！")}>
                         复制前引文
                       </button>
                       {(selectedNote.pdfLink || selectedNote.sourcePdf) && (
-                        <button type="button" className="pdf-split-btn" onClick={() => void openInObsidian(selectedNote.path)}>
+                        <button type="button" className="action-btn" style={{ background: "var(--teal-soft)", color: "var(--teal)", borderColor: "var(--teal-border)" }} onClick={() => void openInObsidian(selectedNote.path)}>
                           📄 在 Obsidian 分屏阅读 PDF (PDF++) ↗
                         </button>
                       )}
@@ -2000,48 +2066,52 @@ ${materials}
                 </div>
               )}
 
-              <section className="preview-summary">
+              <section className="preview-summary" style={{ border: "1px solid var(--line)", borderRadius: 10, background: "#faf8f2", padding: 18, marginBottom: 18 }}>
                 <span className="eyebrow">SUMMARY</span>
-                <p>{selectedNote.summary || "这篇导航笔记没有设置摘要，请在 Obsidian 中查看完整内容。"}</p>
+                <p style={{ margin: "6px 0 0", color: "#3d4844", fontSize: 14, lineHeight: 1.8 }}>{selectedNote.summary || "这篇导航笔记没有设置摘要，请在 Obsidian 中查看完整内容。"}</p>
               </section>
 
-              <div className="drawer-columns">
-                <div>
+              <div className="drawer-columns" style={{ display: "grid", gridTemplateColumns: "1.2fr .8fr", gap: 14, marginBottom: 18 }}>
+                <div style={{ background: "#faf8f3", borderRadius: 10, padding: 16 }}>
                   <span className="eyebrow">OUTLINE</span>
                   {selectedNote.headings.slice(1, 16).map((heading, index) => (
                     <span
                       className="outline-item"
                       key={`${heading.text}-${index}`}
-                      style={{ paddingLeft: `${Math.max(0, heading.level - 1) * 11}px` }}
+                      style={{ display: "block", paddingBlock: 4, paddingLeft: `${Math.max(0, heading.level - 1) * 12}px`, color: "#54615c", fontSize: 12.5 }}
                     >
                       {heading.text}
                     </span>
                   ))}
                 </div>
-                <div>
+                <div style={{ background: "#faf8f3", borderRadius: 10, padding: 16 }}>
                   <span className="eyebrow">LINKS</span>
-                  <p>{selectedNote.links.length} 个出链 · {selectedNote.backlinks.length} 个反链</p>
+                  <p style={{ margin: "8px 0 0", color: "var(--muted)", fontSize: 13 }}>{selectedNote.links.length} 个出链 · {selectedNote.backlinks.length} 个反链</p>
                 </div>
               </div>
 
-              <div className="link-preview">
+              <div className="link-preview" style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }}>
                 <span className="eyebrow">OUTGOING LINKS</span>
-                {selectedNote.links.slice(0, 18).map((link) => link.path ? (
-                  <button type="button" key={`${link.target}-${link.path}`} onClick={() => void openNote(link.path!)}>
-                    → {link.label}
-                  </button>
-                ) : (
-                  <span key={link.target}>· {link.label}</span>
-                ))}
+                <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
+                  {selectedNote.links.slice(0, 18).map((link) => link.path ? (
+                    <button type="button" style={{ border: 0, background: "transparent", textAlign: "left", color: "var(--teal)", fontSize: 13, padding: "4px 0", cursor: "pointer" }} key={`${link.target}-${link.path}`} onClick={() => void openNote(link.path!)}>
+                      → {link.label}
+                    </button>
+                  ) : (
+                    <span key={link.target} style={{ color: "var(--muted)", fontSize: 13 }}>· {link.label}</span>
+                  ))}
+                </div>
               </div>
 
-              <div className="backlinks">
+              <div className="backlinks" style={{ borderTop: "1px solid var(--line)", paddingTop: 16, marginTop: 14 }}>
                 <span className="eyebrow">BACKLINKS</span>
-                {selectedNote.backlinks.slice(0, 16).map((note) => (
-                  <button type="button" key={note.path} onClick={() => void openNote(note.path)}>
-                    ← {note.title}
-                  </button>
-                ))}
+                <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
+                  {selectedNote.backlinks.slice(0, 16).map((note) => (
+                    <button type="button" style={{ border: 0, background: "transparent", textAlign: "left", color: "var(--teal)", fontSize: 13, padding: "4px 0", cursor: "pointer" }} key={note.path} onClick={() => void openNote(note.path)}>
+                      ← {note.title}
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           )}
@@ -2051,57 +2121,58 @@ ${materials}
       {/* Quick Citation Modal */}
       {quickCitationNote && (
         <div className="modal-backdrop" onClick={() => setQuickCitationNote(null)}>
-          <div className="api-modal quick-citation-modal" onClick={(event) => event.stopPropagation()}>
+          <div className="api-modal quick-citation-modal" onClick={(event) => event.stopPropagation()} style={{ width: "min(640px, 94vw)", padding: 28 }}>
             <div className="modal-head">
               <div>
                 <span className="eyebrow">2019 LEGAL CITATION · 一键引注与定位</span>
-                <h2>{quickCitationNote.title}</h2>
-                <p className="quick-citation-authors">
+                <h2 style={{ margin: "6px 0 4px", fontSize: 20, fontFamily: "Georgia, Songti SC, serif" }}>{quickCitationNote.title}</h2>
+                <p className="quick-citation-authors" style={{ color: "var(--muted)", fontSize: 13, margin: 0 }}>
                   {quickCitationNote.authors.join("、") || "作者待核"} · {quickCitationNote.journal || "刊物待核"} {quickCitationNote.year ? `(${quickCitationNote.year})` : ""}
                 </p>
               </div>
               <button type="button" onClick={() => setQuickCitationNote(null)}>×</button>
             </div>
 
-            <div className="quick-citation-body">
-              <div className="quick-mode-tabs">
+            <div className="quick-citation-body" style={{ marginTop: 18 }}>
+              <div className="quick-mode-tabs" style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto" }}>
                 <button
                   type="button"
-                  className={quickMode === "paraphrase" ? "active" : ""}
+                  className={quickMode === "paraphrase" ? "action-btn action-select selected" : "action-btn"}
                   onClick={() => void updateQuickCitation(quickCitationNote, "paraphrase", quickPinpoint)}
                 >
                   转述 (参见)
                 </button>
                 <button
                   type="button"
-                  className={quickMode === "direct" ? "active" : ""}
+                  className={quickMode === "direct" ? "action-btn action-select selected" : "action-btn"}
                   onClick={() => void updateQuickCitation(quickCitationNote, "direct", quickPinpoint)}
                 >
                   直接引语
                 </button>
                 <button
                   type="button"
-                  className={quickMode === "general" ? "active" : ""}
+                  className={quickMode === "general" ? "action-btn action-select selected" : "action-btn"}
                   onClick={() => void updateQuickCitation(quickCitationNote, "general", quickPinpoint)}
                 >
                   整篇文献
                 </button>
                 <button
                   type="button"
-                  className={quickMode === "short" ? "active" : ""}
+                  className={quickMode === "short" ? "action-btn action-select selected" : "action-btn"}
                   onClick={() => void updateQuickCitation(quickCitationNote, "short", quickPinpoint)}
                 >
                   前引文 (再次引用)
                 </button>
               </div>
 
-              <div className="quick-pinpoint-row">
-                <label>
+              <div className="quick-pinpoint-row" style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>
                   具体引用页码 (Pinpoint Page)：
                   <input
                     type="text"
                     value={quickPinpoint}
                     placeholder={quickMode === "general" ? "整篇引用可留空" : "例如 15 或 15-18"}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid var(--line)", marginTop: 6, fontSize: 14 }}
                     onChange={(event: ChangeEvent<HTMLInputElement>) => {
                       const val = event.target.value;
                       setQuickPinpoint(val);
@@ -2112,22 +2183,22 @@ ${materials}
               </div>
 
               {quickError && (
-                <div className="quick-citation-error">⚠️ {quickError}</div>
+                <div className="quick-citation-error" style={{ color: "var(--terracotta)", background: "var(--terracotta-soft)", border: "1px solid var(--terracotta-border)", padding: "10px 14px", borderRadius: 8, marginBottom: 14, fontSize: 13 }}>⚠️ {quickError}</div>
               )}
 
               {quickResult && (
-                <div className="quick-citation-preview-card">
-                  <span className="eyebrow">引注预览 (《法学引注手册》规范)</span>
-                  <div className="quick-citation-text">{quickResult.citation}</div>
+                <div className="quick-citation-preview-card" style={{ background: "var(--teal-soft)", borderLeft: "4px solid var(--teal)", padding: "16px 20px", borderRadius: "0 10px 10px 0", marginBottom: 18 }}>
+                  <span className="eyebrow" style={{ color: "var(--teal)" }}>引注预览 (《法学引注手册》规范)</span>
+                  <div className="quick-citation-text" style={{ font: "500 16px/1.8 Georgia, Songti SC, serif", color: "var(--ink)", marginTop: 6 }}>{quickResult.citation}</div>
                   {quickResult.shortCitation && quickMode !== "short" && (
-                    <div className="quick-citation-short-text">
+                    <div className="quick-citation-short-text" style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--teal-border)", color: "#2d6357", fontSize: 13 }}>
                       <small>再次引用形式：</small>{quickResult.shortCitation}
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="quick-citation-actions-grid">
+              <div className="quick-citation-actions-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <button
                   type="button"
                   className="primary-button"
@@ -2138,7 +2209,7 @@ ${materials}
                 </button>
                 <button
                   type="button"
-                  className="quiet-button"
+                  className="outline-button"
                   disabled={!quickResult}
                   onClick={() => void copyText(quickResult?.markdownFootnote || quickResult?.obsidianDefinition || "", "Markdown 脚注已复制到剪贴板！")}
                 >
@@ -2146,7 +2217,7 @@ ${materials}
                 </button>
                 <button
                   type="button"
-                  className="quiet-button"
+                  className="outline-button"
                   disabled={!quickResult}
                   onClick={() => void copyText(quickResult?.shortCitation || `${quickCitationNote.authors.join("、")}前引文。`, "前引文短注已复制！")}
                 >
@@ -2154,7 +2225,7 @@ ${materials}
                 </button>
                 <button
                   type="button"
-                  className="quiet-button"
+                  className="outline-button"
                   onClick={() => void openInObsidian(quickCitationNote.path)}
                 >
                   📄 在 Obsidian 查看 / PDF++ ↗
