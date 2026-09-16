@@ -39,18 +39,37 @@ def safe_filename(value: str, fallback: str = "未命名论文") -> str:
     return value[:150] or fallback
 
 
+def clean_single_author(raw: str) -> str:
+    """清理知网作者姓名中的机构/身份角标、数字、逗号及上标符号。"""
+    raw = clean_text(raw)
+    # 纯上标/数字/标点符号（例如 "1,", "1,2", "¹²", "1"），直接舍弃
+    if re.fullmatch(r"[\d\s,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰\(\)\[\]（）*#]+", raw):
+        return ""
+    # 剥离末尾的机构/身份脚注标记，如 "(1)", "[1]", "1,", "1,2,", "1", "¹²" 等
+    cleaned = re.sub(r"[\(（\[【]\s*[\d,，、\s]+\s*[\)）\]】]$", "", raw)
+    cleaned = re.sub(r"[\s\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰*#]+$", "", cleaned)
+    # 剥离前导标点或序号（如 "1. 张三"）
+    cleaned = re.sub(r"^[\s\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰*#]+", "", cleaned)
+    return cleaned.strip()
+
+
 def normalize_authors(value: Any) -> list[str]:
+    """统一规范作者姓名列表：拆分多作者、去除机构角标、去重并保序。"""
     if isinstance(value, str):
-        raw = re.split(r"[;,；，、\n]+", value)
+        raw_items = re.split(r"[;,；，、\n/]+", value)
     elif isinstance(value, list):
-        raw = [item.get("name", "") if isinstance(item, dict) else item for item in value]
+        raw_items = [item.get("name", "") if isinstance(item, dict) else item for item in value]
     else:
-        raw = []
+        raw_items = []
+    
     authors: list[str] = []
-    for item in raw:
-        name = re.sub(r"\d+$", "", clean_text(item))
-        if name and name not in authors:
-            authors.append(name)
+    for item in raw_items:
+        # 若单个 item 内含有逗号分隔（如 "俞祺, 俞祺1,"）
+        sub_items = re.split(r"[,，、;；/]+", str(item)) if ("," in str(item) or "，" in str(item)) else [str(item)]
+        for sub in sub_items:
+            name = clean_single_author(sub)
+            if name and name not in authors:
+                authors.append(name)
     return authors
 
 

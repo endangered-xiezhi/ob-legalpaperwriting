@@ -286,8 +286,7 @@ class CNKIPDFDownloader:
             r"""
             const brief=document.querySelector('.brief');
             const authorHeads=brief?.querySelectorAll('h3.author')||[];
-            const clean=(v)=>(v||'').replace(/\s+/g,' ').trim();
-            const authors=authorHeads[0]?Array.from(authorHeads[0].querySelectorAll('a')).map(a=>clean(a.innerText).replace(/\d+$/,'')).filter(Boolean):[];
+            const authors=authorHeads[0]?Array.from(authorHeads[0].querySelectorAll('a')).map(a=>clean(a.innerText).replace(/[\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰]+$/,'').replace(/^[\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰]+/,'')).filter(a=>a&&!/^[\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰]+$/.test(a)):[];
             const affiliations=authorHeads[1]?Array.from(authorHeads[1].querySelectorAll('a')).map(a=>clean(a.innerText).replace(/^\d+\.?/,'')).filter(Boolean):[];
             const keywords=Array.from(document.querySelectorAll('p.keywords a')).map(a=>clean(a.innerText).replace(/[;；]$/,'')).filter(Boolean);
             const citationInfo={};

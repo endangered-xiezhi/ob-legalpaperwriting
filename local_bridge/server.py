@@ -193,6 +193,33 @@ def list_value(value: Any) -> list[str]:
     return [] if value in (None, "") else [str(value)]
 
 
+def clean_single_author(raw: str) -> str:
+    raw = clean_short_text(raw, maximum=100)
+    if re.fullmatch(r"[\d\s,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰\(\)\[\]（）*#]+", raw):
+        return ""
+    cleaned = re.sub(r"[\(（\[【]\s*[\d,，、\s]+\s*[\)）\]】]$", "", raw)
+    cleaned = re.sub(r"[\s\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰*#]+$", "", cleaned)
+    cleaned = re.sub(r"^[\s\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰*#]+", "", cleaned)
+    return cleaned.strip()
+
+
+def normalize_authors(value: Any) -> list[str]:
+    if isinstance(value, str):
+        raw_items = re.split(r"[;,；，、\n/]+", value)
+    elif isinstance(value, list):
+        raw_items = [item.get("name", "") if isinstance(item, dict) else item for item in value]
+    else:
+        raw_items = []
+    authors = []
+    for item in raw_items:
+        sub_items = re.split(r"[,，、;；/]+", str(item)) if ("," in str(item) or "，" in str(item)) else [str(item)]
+        for sub in sub_items:
+            name = clean_single_author(sub)
+            if name and name not in authors:
+                authors.append(name)
+    return authors
+
+
 def plain_text(value: str) -> str:
     value = re.sub(r"```.*?```", " ", value, flags=re.DOTALL)
     value = re.sub(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]", lambda match: match.group(2) or match.group(1), value)
@@ -265,7 +292,7 @@ def note_record(path: Path) -> dict[str, Any]:
         for level, heading_text in HEADING.findall(body)
     ][:45]
     stat = path.stat()
-    authors = list_value(metadata.get("author"))
+    authors = normalize_authors(list_value(metadata.get("author")))
     warning = str(metadata.get("warning") or "").strip()
     domain = str(metadata.get("primary_domain") or "").strip()
     record_status = str(metadata.get("record_status") or "").strip()
