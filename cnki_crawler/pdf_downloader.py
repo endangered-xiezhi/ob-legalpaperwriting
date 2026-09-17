@@ -22,6 +22,7 @@ import re
 import shutil
 import signal
 import sys
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -92,6 +93,44 @@ class CNKIPDFDownloader:
         try:
             signal.signal(signal.SIGINT, _sig_handler)
             signal.signal(signal.SIGTERM, _sig_handler)
+        except Exception:
+            pass
+
+    def _start_terminal_listener(self) -> None:
+        """启动终端后台按键监听：采集中随时输入 'q' 并回车即可立即秒级终止采集并安全归档。"""
+        def _listen():
+            while not self._stop_requested:
+                try:
+                    line = sys.stdin.readline()
+                    if not line:
+                        break
+                    cmd = line.strip().lower()
+                    if cmd in ("q", "quit", "exit", "stop", "终止", "退出"):
+                        logger.info("🛑 终端后台监听捕获到退出指令: %s", cmd)
+                        print(f"\n🛑 [CNKI Spider] 接收到终端 '{cmd}' 退出指令，正在安全停止采集并立即执行归档...")
+                        self._stop_requested = True
+                        try:
+                            flag_candidates = [
+                                Path(config.BASE_DIR).parent / "local_bridge" / "runtime" / "stop_crawler.flag",
+                                Path(config.DATA_ROOT).parent.parent / "local_bridge" / "runtime" / "stop_crawler.flag",
+                                Path("/Users/kansang/Documents/Codex/2026-08-08/h/local_bridge/runtime/stop_crawler.flag"),
+                            ]
+                            for flag in flag_candidates:
+                                flag.parent.mkdir(parents=True, exist_ok=True)
+                                flag.write_text("stop", encoding="utf-8")
+                        except Exception:
+                            pass
+                        try:
+                            os.kill(os.getpid(), signal.SIGINT)
+                        except Exception:
+                            pass
+                        break
+                except Exception:
+                    break
+
+        try:
+            t = threading.Thread(target=_listen, name="CNKI-Terminal-Listener", daemon=True)
+            t.start()
         except Exception:
             pass
 
@@ -419,6 +458,7 @@ class CNKIPDFDownloader:
         assert self.driver is not None
         return self.driver.execute_script(
             r"""
+            const clean = (s) => (s ? String(s).replace(/\s+/g, ' ').trim() : '');
             const brief=document.querySelector('.brief');
             const authorHeads=brief?.querySelectorAll('h3.author')||[];
             const authors=authorHeads[0]?Array.from(authorHeads[0].querySelectorAll('a')).map(a=>clean(a.innerText).replace(/[\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰]+$/,'').replace(/^[\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰]+/,'')).filter(a=>a&&!/^[\d,，、;.；：:¹²³⁴⁵⁶⁷⁸⁹⁰]+$/.test(a)):[];
@@ -479,6 +519,9 @@ class CNKIPDFDownloader:
     def wait_for_new_pdf(self, timeout: int = config.PDF_DOWNLOAD_TIMEOUT) -> Path | None:
         start = time.time()
         while time.time() - start < timeout:
+            if self.is_stop_requested():
+                logger.info("🛑 wait_for_new_pdf 检测到终止请求，提前退出下载等待。")
+                return None
             partial = glob.glob(os.path.join(config.DOWNLOAD_DIR, "*.crdownload"))
             pdfs = glob.glob(os.path.join(config.DOWNLOAD_DIR, "*.pdf"))
             if pdfs and not partial:
@@ -499,16 +542,44 @@ class CNKIPDFDownloader:
         self.driver.switch_to.window(handle)
         time.sleep(config.PAGE_LOAD_WAIT)
         if self._captcha_visible():
-            input("⚠️ 知网详情页要求滑动验证，请手动完成后按回车继续……")
+            try:
+                resp = input("⚠️ 知网详情页要求滑动验证，请手动完成后按回车继续 (输入 q 终止)……").strip().lower()
+                if resp in ("q", "quit", "exit", "stop"):
+                    self._stop_requested = True
+            except (KeyboardInterrupt, EOFError):
+                self._stop_requested = True
         return handle
 
     def click_pdf_download(self) -> bool:
         assert self.driver is not None
+        # 1. 优先尝试 CSS 选择器
         for selector in config.PDF_DOWNLOAD_SELECTORS:
+            if ":contains(" in selector:
+                continue
             try:
                 button = self.driver.find_element(By.CSS_SELECTOR, selector)
                 self.driver.execute_script("arguments[0].click();", button)
                 logger.info("已点击 PDF 下载按钮：%s", selector)
+                return True
+            except (NoSuchElementException, WebDriverException):
+                continue
+
+        # 2. 备选 XPath 策略（全面覆盖知网新版HTML5详情页、旧版、海外版等不同DOM结构）
+        xpath_candidates = [
+            "//a[@id='pdfDown']",
+            "//a[contains(@class, 'btn-dlpdf') or contains(@class, 'dlpdf')]",
+            "//a[contains(normalize-space(.), 'PDF下载') or contains(normalize-space(.), 'PDF 下载')]",
+            "//a[contains(@href, 'download') and (contains(normalize-space(.), 'PDF') or contains(normalize-space(.), '下载'))]",
+            "//a[contains(normalize-space(.), '整本下载') or contains(normalize-space(.), '分章下载')]",
+            "//li[@id='pdfDown']/a",
+            "//div[contains(@class, 'operate-btn')]//a[contains(., 'PDF')]",
+            "//a[contains(@class, 'btn-download') or contains(@class, 'down-btn')]",
+        ]
+        for xp in xpath_candidates:
+            try:
+                elem = self.driver.find_element(By.XPATH, xp)
+                self.driver.execute_script("arguments[0].click();", elem)
+                logger.info("已通过 XPath 点击 PDF 下载按钮：%s", xp)
                 return True
             except (NoSuchElementException, WebDriverException):
                 continue
@@ -584,10 +655,31 @@ class CNKIPDFDownloader:
             time.sleep(2)
             download_windows = set(self.driver.window_handles) - windows_before_download
             if download_windows:
-                self.driver.switch_to.window(list(download_windows)[-1])
-                input("⚠️ 知网打开了下载中间页或验证页，请手动完成后按回车继续……")
-            if self._captcha_visible():
-                input("⚠️ PDF 下载触发滑动验证，请手动完成后按回车继续……")
+                try:
+                    self.driver.switch_to.window(list(download_windows)[-1])
+                except WebDriverException:
+                    pass
+                if self._captcha_visible():
+                    try:
+                        resp = input("⚠️ 知网下载页要求滑动验证，请手动完成后按回车继续 (输入 q 终止)……").strip().lower()
+                        if resp in ("q", "quit", "exit", "stop"):
+                            self._stop_requested = True
+                            return
+                    except (KeyboardInterrupt, EOFError):
+                        self._stop_requested = True
+                        return
+            elif self._captcha_visible():
+                try:
+                    resp = input("⚠️ PDF 下载触发滑动验证，请手动完成后按回车继续 (输入 q 终止)……").strip().lower()
+                    if resp in ("q", "quit", "exit", "stop"):
+                        self._stop_requested = True
+                        return
+                except (KeyboardInterrupt, EOFError):
+                    self._stop_requested = True
+                    return
+
+            if self.is_stop_requested():
+                return
 
             downloaded = self.wait_for_new_pdf()
             if not downloaded:
@@ -700,9 +792,15 @@ class CNKIPDFDownloader:
         self.start_browser()
         assert self.driver is not None
         self.setup_signals()
+        self._start_terminal_listener()
         try:
             self.wait_for_user_login()
             self.wait_for_search_setup()
+            print("\n" + "=" * 66)
+            print("🚀 开始自动采集！")
+            print("💡 采集中随时在终端输入【q + 回车】或按【Ctrl+C】可立即安全终止并归档！")
+            print("=" * 66 + "\n")
+            logger.info("采集中随时在终端输入【q + 回车】或按【Ctrl+C】可立即安全终止并归档。")
             page_number = 1
             while not self.is_stop_requested():
                 logger.info("============ 正在处理第 %s 页 ============", page_number)

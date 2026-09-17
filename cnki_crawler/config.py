@@ -124,7 +124,7 @@ PDF_DOWNLOAD_SELECTORS = [
     "a[name='pdfDown']",
     ".btn-dlpdf a",
     "a#pdfDown",
-    "a:contains('PDF下载')",
+    "a.dlpdf",
 ]
 
 # 附加采集元信息画像

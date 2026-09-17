@@ -4,7 +4,8 @@
 script_dir="${0:A:h}"
 cd "$script_dir" || exit 1
 
-trap 'echo "\n🛑 任务已由用户手动中止，已执行安全归档。"; read "?按回车键关闭本窗口…"; exit 0' INT TERM
+# 保证由 Python 内部信号处理器与后台按键监听完整捕获终止信号并执行安全归档
+trap '' INT
 
 echo "============================================================"
 echo "          正在启动知网学术论文采集器 (CNKI Spider)          "
@@ -35,6 +36,7 @@ fi
 python3 run_spider.py
 
 exit_code=$?
+trap - INT
 echo ""
 echo "============================================================"
 echo "知网采集器已退出（状态码: $exit_code）。"

@@ -148,6 +148,17 @@ class CrawlerAuthorAndTerminationTests(unittest.TestCase):
         downloader._stop_requested = True
         self.assertTrue(downloader.is_stop_requested())
 
+    def test_extract_detail_metadata_defines_clean(self) -> None:
+        """测试详情页解析脚本中必须预先定义 clean 辅助函数，避免抛出 clean is not defined 异常。"""
+        downloader_file = CRAWLER_ROOT / "pdf_downloader.py"
+        content = downloader_file.read_text(encoding="utf-8")
+        self.assertIn("const clean = (s) =>", content)
+
+    def test_pdf_download_selectors_validity(self) -> None:
+        """测试下载按钮选择器不包含已废弃的 jQuery 伪类（如 :contains）。"""
+        for sel in config.PDF_DOWNLOAD_SELECTORS:
+            self.assertNotIn(":contains(", sel)
+
 
 if __name__ == "__main__":
     unittest.main()
