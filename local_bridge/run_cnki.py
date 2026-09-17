@@ -17,13 +17,21 @@ def resolve_vault_root() -> Path:
     if env_vault:
         candidate = Path(env_vault).expanduser().resolve()
         if (candidate / "知识产权").exists():
-            return candidate
+            try:
+                if any((candidate / "知识产权").iterdir()):
+                    return candidate
+            except OSError:
+                pass
+    user_vault = (Path.home() / "Downloads" / "Obsidian Vault").resolve()
+    if (user_vault / "知识产权").exists():
+        try:
+            if any((user_vault / "知识产权").iterdir()):
+                return user_vault
+        except OSError:
+            pass
     project_vault = (Path(__file__).resolve().parent.parent / "vault").resolve()
     if (project_vault / "知识产权").exists():
         return project_vault
-    user_vault = (Path.home() / "Downloads" / "Obsidian Vault").resolve()
-    if (user_vault / "知识产权").exists():
-        return user_vault
     return project_vault
 
 

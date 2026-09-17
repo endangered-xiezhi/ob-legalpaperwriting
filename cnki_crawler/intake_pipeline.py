@@ -403,6 +403,24 @@ def upsert_obsidian_stub(metadata: dict[str, Any], stub_dir: Path, existing_path
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(content, encoding="utf-8")
     temporary.replace(path)
+
+    # 自动多 Vault 镜像同步（用户实际 Obsidian 仓库、项目仓库与 Codex 备份）
+    mirror_dirs = [
+        Path.home() / "Downloads" / "Obsidian Vault" / "知识产权" / "论文库",
+        Path(__file__).resolve().parent.parent / "vault" / "知识产权" / "论文库",
+        Path("/Users/kansang/Documents/Codex/2026-08-08/h/vault/知识产权/论文库"),
+    ]
+    for mirror_dir in mirror_dirs:
+        try:
+            if mirror_dir.resolve() != path.parent.resolve() and mirror_dir.parent.exists():
+                mirror_dir.mkdir(parents=True, exist_ok=True)
+                mirror_file = mirror_dir / path.name
+                mirror_tmp = mirror_file.with_suffix(mirror_file.suffix + ".tmp")
+                mirror_tmp.write_text(content, encoding="utf-8")
+                mirror_tmp.replace(mirror_file)
+        except OSError:
+            pass
+
     return path, created
 
 

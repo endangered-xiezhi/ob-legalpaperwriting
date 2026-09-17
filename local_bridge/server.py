@@ -48,13 +48,21 @@ def resolve_vault_root() -> Path:
     if env_vault:
         candidate = Path(env_vault).expanduser().resolve()
         if (candidate / "知识产权").exists():
-            return candidate
+            try:
+                if any((candidate / "知识产权").iterdir()):
+                    return candidate
+            except OSError:
+                pass
+    user_vault = (Path.home() / "Downloads" / "Obsidian Vault").resolve()
+    if (user_vault / "知识产权").exists():
+        try:
+            if any((user_vault / "知识产权").iterdir()):
+                return user_vault
+        except OSError:
+            pass
     project_vault = (PROJECT_ROOT / "vault").resolve()
     if (project_vault / "知识产权").exists():
         return project_vault
-    user_vault = (Path.home() / "Downloads" / "Obsidian Vault").resolve()
-    if (user_vault / "知识产权").exists():
-        return user_vault
     return project_vault
 
 
@@ -141,9 +149,10 @@ def obsidian_vault_identifier() -> str:
         return override
     try:
         config = json.loads(OBSIDIAN_CONFIG_PATH.read_text(encoding="utf-8"))
+        user_vault_path = (Path.home() / "Downloads" / "Obsidian Vault").resolve()
         for vault_id, entry in config.get("vaults", {}).items():
             registered = Path(str(entry.get("path") or "")).expanduser().resolve()
-            if registered == VAULT_ROOT.resolve():
+            if registered == VAULT_ROOT.resolve() or registered == user_vault_path:
                 return str(vault_id)
     except (OSError, ValueError, TypeError, json.JSONDecodeError):
         pass
@@ -471,6 +480,8 @@ def navigation_payload() -> dict[str, Any]:
     return {
         "ok": True,
         "vaultName": VAULT_ROOT.name,
+        "vaultRoot": str(VAULT_ROOT),
+        "vaultId": obsidian_vault_identifier(),
         "scope": "知识产权",
         "generatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
         "version": version["version"],
@@ -496,10 +507,10 @@ def navigation_payload() -> dict[str, Any]:
         "domains": domains,
         "controversies": sorted(controversies, key=lambda record: record["title"]),
         "researchPaths": sorted(research_paths, key=lambda record: record["title"]),
-        "recent": sorted(formal, key=lambda record: record["modified"], reverse=True)[:15],
-        "pending": sorted(pending + inbox, key=lambda record: record["modified"], reverse=True)[:60],
-        "intake": sorted(intake, key=lambda record: record["modified"], reverse=True)[:200],
-        "unclassified": sorted(unclassified, key=lambda record: record["modified"], reverse=True)[:60],
+        "recent": sorted(formal, key=lambda record: record["modified"], reverse=True)[:20],
+        "pending": sorted(pending + inbox, key=lambda record: record["modified"], reverse=True)[:100],
+        "intake": sorted(intake, key=lambda record: record["modified"], reverse=True)[:500],
+        "unclassified": sorted(unclassified, key=lambda record: record["modified"], reverse=True)[:100],
         "searchNotes": searchable,
     }
 
@@ -649,16 +660,18 @@ class BridgeHandler(BaseHTTPRequestHandler):
 
     def _origin_allowed(self) -> bool:
         origin = self.headers.get("Origin")
-        return origin is None or origin in ALLOWED_ORIGINS
+        if origin is None or origin in ALLOWED_ORIGINS:
+            return True
+        return bool(re.match(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", origin))
 
     def _headers(self, status: int = 200) -> None:
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         origin = self.headers.get("Origin")
-        if origin in ALLOWED_ORIGINS:
+        if origin and self._origin_allowed():
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Vary", "Origin")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.end_headers()
 

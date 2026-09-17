@@ -415,17 +415,19 @@ class CNKIPDFDownloader:
             metadata["capture_profile"] = getattr(config, "CAPTURE_PROFILE", {})
             metadata["captured_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
 
-            # 可选：在 Obsidian 中创建样板卡片
-            if getattr(config, "AUTO_CREATE_OBSIDIAN_STUB", False):
-                stub_path, created = upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR))
-                metadata["obsidian_note_path"] = str(stub_path)
-                if created:
-                    self.stats["stubs"] += 1
-                    logger.info("✅ 已创建 Obsidian 样板卡片：%s", stub_path.name)
-                else:
-                    logger.info("ℹ️ 已匹配现有 Obsidian 笔记，保留人工内容：%s", stub_path.name)
+            # 核心产物落地：立即在 Obsidian 知识库直接创建/更新 Markdown 卡片
+            stub_path, created = upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR))
+            metadata["obsidian_note_path"] = str(stub_path)
+            if created:
+                self.stats["stubs"] += 1
+                logger.info("✅ 已直接生成 Obsidian Markdown 笔记：%s", stub_path.name)
+            else:
+                logger.info("ℹ️ 已匹配现有 Obsidian 笔记，保留人工内容并更新元数据：%s", stub_path.name)
 
-            write_manifest(metadata, Path(config.METADATA_DIR))
+            try:
+                write_manifest(metadata, Path(config.METADATA_DIR))
+            except OSError:
+                pass
 
             if metadata["record_id"] in self.downloaded_record_ids:
                 logger.info("⏭️ 该文献稳定ID已下载过，跳过下载：%s", metadata["record_id"])
@@ -435,9 +437,13 @@ class CNKIPDFDownloader:
             windows_before_download = set(self.driver.window_handles)
             if not self.click_pdf_download():
                 metadata["ingest_warning"] = "未找到PDF下载按钮"
-                write_manifest(metadata, Path(config.METADATA_DIR))
+                upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR), stub_path)
+                try:
+                    write_manifest(metadata, Path(config.METADATA_DIR))
+                except OSError:
+                    pass
                 self.stats["metadata_only"] += 1
-                logger.warning("只保存元数据，未找到 PDF 下载按钮：%s", title)
+                logger.warning("只保存元数据笔记，未找到 PDF 下载按钮：%s", title)
                 return
 
             time.sleep(2)
@@ -451,9 +457,13 @@ class CNKIPDFDownloader:
             downloaded = self.wait_for_new_pdf()
             if not downloaded:
                 metadata["ingest_warning"] = "PDF下载超时或失败"
-                write_manifest(metadata, Path(config.METADATA_DIR))
+                upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR), stub_path)
+                try:
+                    write_manifest(metadata, Path(config.METADATA_DIR))
+                except OSError:
+                    pass
                 self.stats["metadata_only"] += 1
-                logger.warning("只保存元数据，PDF 下载超时：%s", title)
+                logger.warning("只保存元数据笔记，PDF 下载超时：%s", title)
                 return
 
             year = str(metadata.get("year") or "unknown")
@@ -469,7 +479,7 @@ class CNKIPDFDownloader:
             else:
                 shutil.move(str(downloaded), pdf_path)
 
-            # 自动提取带 [[PDF_PAGE:n]] 标柱的 TXT 和页码对照 JSON
+            # 自动提取带 [[PDF_PAGE:n]] 标柱的 TXT 和页码对照索引
             if getattr(config, "EXTRACT_PAGINATED_TXT", True):
                 txt_path = Path(config.TXT_DIR) / f"{stem}__{suffix}.txt"
                 index_path = Path(config.PAGE_INDEX_DIR) / f"{stem}__{suffix}.json"
@@ -491,21 +501,26 @@ class CNKIPDFDownloader:
             else:
                 metadata["pdf_path"] = str(pdf_path)
 
-            write_manifest(metadata, Path(config.METADATA_DIR))
-
-            # 若开启了 Obsidian 联动，回写实际路径
-            if getattr(config, "AUTO_CREATE_OBSIDIAN_STUB", False):
-                stub_path, _ = upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR), stub_path)
+            # 直接回写实际 PDF/TXT 路径与最新状态至 Obsidian Markdown 笔记
+            stub_path, _ = upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR), stub_path)
+            try:
+                write_manifest(metadata, Path(config.METADATA_DIR))
+            except OSError:
+                pass
 
             self.downloaded_titles.add(stem)
             self.downloaded_record_ids.add(metadata["record_id"])
             self.stats["success"] += 1
-            logger.info("✅ 采集成功归档：%s", pdf_path.name)
+            logger.info("✅ 采集成功并完成 Obsidian 笔记落盘：%s", stub_path.name if stub_path else pdf_path.name)
         except Exception as exc:
             self.stats["failed"] += 1
             logger.exception("采集文章失败 %s：%s", title, exc)
             if metadata:
                 metadata["ingest_warning"] = f"采集异常：{exc}"
+                try:
+                    upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR), stub_path)
+                except Exception:
+                    pass
                 try:
                     write_manifest(metadata, Path(config.METADATA_DIR))
                 except OSError:

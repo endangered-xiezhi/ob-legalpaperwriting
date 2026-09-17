@@ -295,20 +295,25 @@ export default function ObsidianWorkbench({ initialData }: { initialData?: Navig
   const loadNavigation = useCallback(async (silent = false) => {
     if (!silent) setBridgeState("loading");
     try {
-      const response = await fetch(`${BRIDGE}/api/vault/navigation`);
+      const response = await fetch(`${BRIDGE}/api/vault/navigation?_t=${Date.now()}`);
       if (!response.ok) throw new Error("navigation unavailable");
       const data = (await response.json()) as NavigationData;
       versionRef.current = data.version;
       setNavigation(data);
       setBridgeState("connected");
-      if (silent) setNotice("检测到 Obsidian 内容变化，目录已自动更新。");
+      if (!silent) {
+        setNotice(`✅ 已直连 Obsidian 论文库：实时读取 ${data.stats.papers} 篇论文（${data.stats.intake} 篇待处理样板）`);
+      } else {
+        setNotice("检测到 Obsidian 库内容变化，论文目录已自动实时更新。");
+      }
     } catch {
       try {
-        const fallbackRes = await fetch("/navigation-fallback.json");
+        const fallbackRes = await fetch(`/navigation-fallback.json?_t=${Date.now()}`);
         if (fallbackRes.ok) {
           const fallbackData = (await fallbackRes.json()) as NavigationData;
           setNavigation(fallbackData);
-          if (!silent) setBridgeState("connected");
+          setBridgeState("offline");
+          if (!silent) setNotice("⚠️ 本地 Bridge 尚未就绪，当前展示离线镜像。请在后台启动 Bridge 以实时同步 Obsidian 库。");
           return;
         }
       } catch {
@@ -321,7 +326,7 @@ export default function ObsidianWorkbench({ initialData }: { initialData?: Navig
   const checkVersion = useCallback(async () => {
     if (document.visibilityState !== "visible") return;
     try {
-      const response = await fetch(`${BRIDGE}/api/vault/version`);
+      const response = await fetch(`${BRIDGE}/api/vault/version?_t=${Date.now()}`);
       if (!response.ok) {
         setBridgeState("offline");
         return;
@@ -1202,8 +1207,27 @@ ${materials}
         </div>
 
         <div className="section-heading spaced-heading">
-          <div><span className="eyebrow">INTAKE QUEUE</span><h2>Obsidian 待处理样板</h2></div>
-          <span>{intakeNotes.length} 篇待处理样板</span>
+          <div>
+            <span className="eyebrow">DIRECT OBSIDIAN MARKDOWN SYNC</span>
+            <h2>Obsidian 待处理样板（直接读取 .md 笔记）</h2>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              type="button"
+              className="action-btn"
+              style={{ background: "var(--navy-soft)", color: "var(--navy)", fontWeight: 600, padding: "6px 14px" }}
+              onClick={() => void loadNavigation()}
+            >
+              🔄 立即同步样板
+            </button>
+            <span>{intakeNotes.length} 篇待处理样板</span>
+          </div>
+        </div>
+        <div style={{ marginBottom: 14, padding: "10px 14px", background: "var(--card-bg, #fff)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, color: "var(--muted)", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 15 }}>💡</span>
+          <span>
+            <strong>原生 Markdown 存储</strong>：所有新抓取的文献均直接作为 Markdown 笔记（<code>.md</code>）写入 Obsidian <code>知识产权/论文库/</code>，绝不依赖中间 JSON 文件。无论通过爬虫采集、还是直接在 Obsidian 中新建修改，此处均实时扫描更新。
+          </span>
         </div>
         <div className="intake-queue" style={{ display: "grid", gap: 12 }}>
           {intakeNotes.map((note) => (
@@ -1969,7 +1993,14 @@ ${materials}
           </div>
           <div className="top-actions">
             <span className="auto-update-label"><i />10秒自动检查</span>
-            <button type="button" className="top-refresh-btn" onClick={() => void loadNavigation()}>↻ 刷新</button>
+            <button
+              type="button"
+              className="top-refresh-btn"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 600 }}
+              onClick={() => void loadNavigation()}
+            >
+              🔄 立即同步 Obsidian 库 ({navigation?.stats.papers ?? 0}篇)
+            </button>
             <button className="obsidian-button" type="button" onClick={() => void openInObsidian("知识产权/00_知识产权研究导航.md")}>
               OB&nbsp; 原生导航 ↗
             </button>
