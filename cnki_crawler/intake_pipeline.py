@@ -209,6 +209,50 @@ def yaml_list(key: str, values: list[Any]) -> list[str]:
     return lines
 
 
+def link_pdf_to_vaults(pdf_path: Path | str, metadata: dict[str, Any] | None = None) -> str:
+    """将物理 PDF 文件无冗余软链接到 Obsidian 库的 '知识产权/PDF/' 目录。
+    同时建立规范标题软链接与哈希物理名软链接，保证 Obsidian 及 PDF++ 插件 100% 能够定位与分屏预览。
+    返回规范的 PDF 文件名（用于 Obsidian 内部双链，如 '标题.pdf'）。
+    """
+    if not pdf_path:
+        return ""
+    p = Path(pdf_path).resolve()
+    if not p.exists() or p.suffix.lower() != ".pdf":
+        return ""
+
+    meta = metadata or {}
+    clean_title = safe_filename(clean_text(meta.get("title") or p.stem))
+    clean_title = re.sub(r"__[\w\-]+$", "", clean_title).strip()
+    clean_pdf_name = f"{clean_title}.pdf" if clean_title else p.name
+
+    target_vault_dirs = [
+        Path.home() / "Downloads" / "Obsidian Vault" / "知识产权" / "PDF",
+        Path(__file__).resolve().parent.parent / "vault" / "知识产权" / "PDF",
+        Path("/Users/kansang/Documents/Codex/2026-08-08/h/vault/知识产权/PDF"),
+    ]
+    for v_dir in target_vault_dirs:
+        try:
+            if v_dir.parent.exists():
+                v_dir.mkdir(parents=True, exist_ok=True)
+                for name in {clean_pdf_name, p.name}:
+                    link_file = v_dir / name
+                    if link_file.is_symlink() or link_file.exists():
+                        try:
+                            if link_file.is_symlink() and link_file.resolve() == p:
+                                continue
+                            link_file.unlink()
+                        except OSError:
+                            pass
+                    try:
+                        link_file.symlink_to(p)
+                    except OSError:
+                        pass
+        except OSError as exc:
+            logger.warning("创建 Obsidian PDF 软链接异常 %s: %s", v_dir, exc)
+
+    return clean_pdf_name
+
+
 def render_frontmatter(metadata: dict[str, Any], created_at: str) -> str:
     missing = missing_fields(metadata)
     metadata_status = "ready" if not missing else "partial"
@@ -219,15 +263,23 @@ def render_frontmatter(metadata: dict[str, Any], created_at: str) -> str:
     if clean_text(metadata.get("ingest_warning")):
         warnings.append(clean_text(metadata["ingest_warning"]))
     warning = "；".join(warnings)
-    # 计算规范的 PDF 内部双链名称
+
+    # 计算规范的 PDF 内部双链名称与物理源路径
     pdf_source = clean_text(metadata.get('pdf_path') or metadata.get('source_pdf') or '')
-    if pdf_source:
+    resolved_src = Path(pdf_source).resolve() if pdf_source else None
+
+    if resolved_src and resolved_src.exists():
+        pdf_file = link_pdf_to_vaults(resolved_src, metadata)
+        pdf_link = f"[[{pdf_file}]]"
+        source_pdf_val = str(resolved_src)
+    elif pdf_source:
         pdf_file = Path(pdf_source).name
+        pdf_link = f"[[{pdf_file}]]"
+        source_pdf_val = pdf_source
     else:
-        stem = safe_filename(clean_text(metadata.get('title') or ''))
-        suffix = str(metadata.get('record_id', ''))[-8:]
-        pdf_file = f"{stem}__{suffix}.pdf" if stem else ""
-    pdf_link = f"[[{pdf_file}]]" if pdf_file else ""
+        pdf_file = ""
+        pdf_link = "待下载/暂未抓取"
+        source_pdf_val = ""
 
     lines = [
         "---",
@@ -253,7 +305,7 @@ def render_frontmatter(metadata: dict[str, Any], created_at: str) -> str:
         *yaml_list("author_affiliation", metadata.get("affiliations", []) if isinstance(metadata.get("affiliations"), list) else []),
         'primary_domain: ""',
         f"source_url: {yaml_scalar(metadata.get('detail_url') or metadata.get('url', ''))}",
-        f"source_pdf: {yaml_scalar(pdf_file)}",
+        f"source_pdf: {yaml_scalar(source_pdf_val or pdf_file)}",
         f"pdf_link: {yaml_scalar(pdf_link)}",
         f"source_txt: {yaml_scalar(metadata.get('txt_path', ''))}",
         f"page_index_path: {yaml_scalar(metadata.get('page_index_path', ''))}",
@@ -274,14 +326,21 @@ def render_stub_body(metadata: dict[str, Any]) -> str:
     title = clean_text(metadata.get("title")) or "待核题名"
     abstract = clean_text(metadata.get("abstract"))
     keywords = "；".join(metadata.get("keywords", [])) if isinstance(metadata.get("keywords"), list) else ""
+
     pdf_source = clean_text(metadata.get('pdf_path') or metadata.get('source_pdf') or '')
-    if pdf_source:
-        pdf_file = Path(pdf_source).name
+    resolved_src = Path(pdf_source).resolve() if pdf_source else None
+
+    if resolved_src and resolved_src.exists():
+        pdf_file = link_pdf_to_vaults(resolved_src, metadata)
+        pdf_info_block = f"""> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：[[{pdf_file}]]
+> - 本地文件直达：[打开本地 PDF 文件](file://{resolved_src})
+> - 本地源路径：`{resolved_src}`
+> - 联动技巧：配合已启用的 **PDF++** 插件，按住 `Option` (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。"""
     else:
-        stem = safe_filename(clean_text(metadata.get('title') or ''))
-        suffix = str(metadata.get('record_id', ''))[-8:]
-        pdf_file = f"{stem}__{suffix}.pdf" if stem else ""
-    pdf_link = f"[[{pdf_file}]]" if pdf_file else "待关联"
+        pdf_info_block = """> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
+> - 原文双链：待下载（当前样板仅抓取到元数据，未下载 PDF）
+> - 状态说明：后续若通过爬虫补全下载或手动导入，放入库中将自动关联激活 PDF++ 分屏批注。"""
 
     return f"""
 {STUB_MARKER}
@@ -291,9 +350,7 @@ def render_stub_body(metadata: dict[str, Any]) -> str:
 > [!warning] 新采集样板
 > 本页由知网采集器创建，尚未正式纳入论文库。元数据、观点、关系和引注均须人工审核。
 
-> [!info] 📄 原文 PDF 深度定位与批注 (PDF++)
-> - 原文双链：{pdf_link}
-> - 联动技巧：配合已启用的 **PDF++** 插件，按住 `Option` (Mac) 点击上方双链即可右侧分屏对照阅读；在 PDF 中划词高亮即可一键复制带页码与选区的双向精准反链。
+{pdf_info_block}
 
 ## 一、标题摘要初筛
 

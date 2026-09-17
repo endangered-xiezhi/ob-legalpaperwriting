@@ -39,6 +39,7 @@ import config
 from intake_pipeline import (
     extract_paginated_text,
     find_existing_stub,
+    link_pdf_to_vaults,
     merge_metadata,
     parse_endnote,
     safe_filename,
@@ -186,8 +187,19 @@ class CNKIPDFDownloader:
                         if not dest.exists():
                             shutil.move(str(pdf), dest)
                             logger.info("归档残留临时 PDF：%s", dest.name)
+                        link_pdf_to_vaults(dest, {"title": dest.stem})
         except Exception as exc:
             logger.warning("归档临时 PDF 异常：%s", exc)
+
+        # 1.1 全量确保 DATA_ROOT 中所有 PDF 均已在 Obsidian 库建立了零空间软链接
+        try:
+            data_dir = Path(config.DATA_ROOT)
+            if data_dir.exists():
+                for pdf_file in data_dir.rglob("*.pdf"):
+                    if not pdf_file.name.endswith(".crdownload"):
+                        link_pdf_to_vaults(pdf_file, {"title": pdf_file.stem})
+        except Exception as exc:
+            logger.warning("全量建立 Obsidian PDF 软链接异常：%s", exc)
 
         # 2. 扫描 metadata 目录，确保每一份 JSON 元数据均已落盘为 Obsidian Markdown 样板笔记
         try:
@@ -705,6 +717,9 @@ class CNKIPDFDownloader:
                 downloaded.unlink(missing_ok=True)
             else:
                 shutil.move(str(downloaded), pdf_path)
+
+            # 核心：将已下载物理 PDF 立即无冗余软链接至 Obsidian 库的 知识产权/PDF/ 目录
+            link_pdf_to_vaults(pdf_path, metadata)
 
             # 自动提取带 [[PDF_PAGE:n]] 标柱的 TXT 和页码对照索引
             if getattr(config, "EXTRACT_PAGINATED_TXT", True):
