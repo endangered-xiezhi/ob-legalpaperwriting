@@ -253,6 +253,8 @@ export default function ObsidianWorkbench({ initialData }: { initialData?: Navig
   const [newJournal, setNewJournal] = useState("");
   const [strictJournal, setStrictJournal] = useState(true);
   const [crawlerBusy, setCrawlerBusy] = useState(false);
+  const [crawlerRunning, setCrawlerRunning] = useState(false);
+  const [crawlerStopping, setCrawlerStopping] = useState(false);
   const [researchQuestion, setResearchQuestion] = useState("");
   const [keywordText, setKeywordText] = useState("");
   const [yearRange, setYearRange] = useState("");
@@ -316,6 +318,31 @@ export default function ObsidianWorkbench({ initialData }: { initialData?: Navig
       // ignore
     }
   }, []);
+
+  // Poll CNKI Crawler Status when in intake view
+  useEffect(() => {
+    if (view !== "intake") return;
+    let mounted = true;
+    const poll = async () => {
+      try {
+        const res = await fetch(`${BRIDGE}/api/cnki/status`);
+        if (res.ok) {
+          const data = await res.json();
+          if (mounted) {
+            setCrawlerRunning(Boolean(data.running));
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    poll();
+    const timer = setInterval(poll, 2500);
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
+  }, [view]);
 
   const loadNavigation = useCallback(async (silent = false) => {
     if (!silent) setBridgeState("loading");
@@ -660,11 +687,32 @@ ${materials}
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "启动失败");
+      setCrawlerRunning(true);
       setNotice(`${data.message} 新样板会自动出现在知网收集待处理队列。`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "无法启动知网爬虫（若在云端请按提示运行本地命令行脚本）");
     } finally {
       setCrawlerBusy(false);
+    }
+  }
+
+  async function stopCrawler() {
+    setCrawlerStopping(true);
+    try {
+      const response = await fetch(`${BRIDGE}/api/cnki/stop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "终止失败");
+      setCrawlerRunning(false);
+      setNotice(data.message || "已终止知网采集，文献已完成 Obsidian 归档入库。");
+      await loadNavigation(true);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "无法终止爬虫进程");
+    } finally {
+      setCrawlerStopping(false);
     }
   }
 
@@ -1276,11 +1324,35 @@ ${materials}
             <div className="crawler-bar">
               <div>
                 <strong>当前已配置好采集条件</strong>
-                <span>启动后新采集样板将自动注入下方待处理队列</span>
+                <span>
+                  {crawlerRunning
+                    ? "🟢 爬虫正在后台运行采集中，可随时安全终止并归档已抓取文献至 Obsidian"
+                    : "启动后新采集样板将自动注入下方待处理队列"}
+                </span>
               </div>
-              <button className="primary-button" type="button" disabled={crawlerBusy} onClick={() => void startCrawler()}>
-                {crawlerBusy ? "正在连接…" : "登录知网并启动采集"}
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {crawlerRunning ? (
+                  <>
+                    <span style={{ fontSize: 13, color: "var(--teal)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#10b981" }}></span>
+                      正在采集中…
+                    </span>
+                    <button
+                      className="action-btn"
+                      type="button"
+                      disabled={crawlerStopping}
+                      style={{ background: "var(--terracotta-soft)", color: "var(--terracotta)", fontWeight: 600, padding: "8px 18px", fontSize: 13.5 }}
+                      onClick={() => void stopCrawler()}
+                    >
+                      {crawlerStopping ? "正在收尾归档…" : "🛑 终止采集并归档入库"}
+                    </button>
+                  </>
+                ) : (
+                  <button className="primary-button" type="button" disabled={crawlerBusy} onClick={() => void startCrawler()}>
+                    {crawlerBusy ? "正在连接…" : "登录知网并启动采集"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

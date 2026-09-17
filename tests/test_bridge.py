@@ -217,6 +217,34 @@ class BridgeIndexTests(unittest.TestCase):
         self.assertEqual(updated_map["CNKI-OTHER-1"]["discipline"], "ip")
         self.assertEqual(updated_map["CNKI-OTHER-1"]["domain"], "知识产权法")
 
+    def test_crawler_status_and_stop(self) -> None:
+        handler = server.BridgeHandler
+        # 初始状态无爬虫运行
+        status = server.BridgeHandler._get_cnki_status(None)  # type: ignore
+        self.assertTrue(status["ok"])
+        self.assertFalse(status["running"])
+
+        # 触发停止，验证生成 stop_crawler.flag 并返回成功消息
+        server.RUNTIME_ROOT.mkdir(parents=True, exist_ok=True)
+        stop_flag = server.RUNTIME_ROOT / "stop_crawler.flag"
+        if stop_flag.exists():
+            stop_flag.unlink()
+        
+        # 写入伪状态
+        status_file = server.RUNTIME_ROOT / "crawler_status.json"
+        status_file.write_text(json.dumps({"running": True, "mode": "author"}), encoding="utf-8")
+        
+        # 模拟响应并验证
+        class MockServer:
+            def _json(self, payload, code=200):
+                self.payload = payload
+        mock = MockServer()
+        server.BridgeHandler._stop_cnki(mock)  # type: ignore
+        self.assertTrue(mock.payload["ok"])
+        self.assertIn("已成功终止", mock.payload["message"])
+        self.assertTrue(stop_flag.exists())
+        stop_flag.unlink(missing_ok=True)
+
 
 if __name__ == "__main__":
     unittest.main()

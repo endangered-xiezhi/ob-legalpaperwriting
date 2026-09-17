@@ -35,6 +35,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 import config
 from intake_pipeline import (
     extract_paginated_text,
+    find_existing_stub,
     merge_metadata,
     parse_endnote,
     safe_filename,
@@ -96,6 +97,87 @@ class CNKIPDFDownloader:
                     titles.add(safe_filename(str(item["title"])))
         logger.info("已读取历史记录：%s 个题名，%s 个稳定记录ID（已下载文献将自动跳过）。", len(titles), len(record_ids))
         return titles, record_ids
+
+    def is_stop_requested(self) -> bool:
+        """检查外部是否有终止采集的控制指令（如来自前端UI或信号文件的终止）。"""
+        flag_candidates = [
+            Path(config.BASE_DIR).parent / "local_bridge" / "runtime" / "stop_crawler.flag",
+            Path(config.DATA_ROOT).parent.parent / "local_bridge" / "runtime" / "stop_crawler.flag",
+            Path("/Users/kansang/Documents/Codex/2026-08-08/h/local_bridge/runtime/stop_crawler.flag"),
+        ]
+        return any(f.exists() for f in flag_candidates)
+
+    def finalize_and_archive(self) -> None:
+        """终止后归档与双仓对齐收尾流程：确保所有已下载和已抓取文献100%沉淀至Obsidian。"""
+        logger.info("📦 正在执行终止收尾：扫描未归档文件并对齐 Obsidian 论文库...")
+        # 1. 扫描临时 downloads 目录中是否有已下载完毕的 PDF
+        try:
+            download_dir = Path(config.DOWNLOAD_DIR)
+            if download_dir.exists():
+                for pdf in download_dir.glob("*.pdf"):
+                    if not pdf.name.endswith(".crdownload"):
+                        target_dir = Path(config.DATA_ROOT) / "unsorted"
+                        target_dir.mkdir(parents=True, exist_ok=True)
+                        dest = target_dir / pdf.name
+                        if not dest.exists():
+                            shutil.move(str(pdf), dest)
+                            logger.info("归档残留临时 PDF：%s", dest.name)
+        except Exception as exc:
+            logger.warning("归档临时 PDF 异常：%s", exc)
+
+        # 2. 扫描 metadata 目录，确保每一份 JSON 元数据均已落盘为 Obsidian Markdown 样板笔记
+        try:
+            meta_dir = Path(config.METADATA_DIR)
+            stub_dir = Path(config.PAPER_STUB_DIR)
+            if meta_dir.exists() and stub_dir.exists():
+                archived_new = 0
+                for json_file in meta_dir.glob("*.json"):
+                    try:
+                        data = json.loads(json_file.read_text(encoding="utf-8"))
+                        if not data.get("title"):
+                            continue
+                        existing = find_existing_stub(stub_dir, data)
+                        if not existing:
+                            _, created = upsert_obsidian_stub(data, stub_dir)
+                            if created:
+                                archived_new += 1
+                                self.stats["stubs"] += 1
+                    except Exception:
+                        continue
+                if archived_new > 0:
+                    logger.info("✅ 终止归档完成：补全生成了 %s 篇 Obsidian 样板卡片。", archived_new)
+        except Exception as exc:
+            logger.warning("补全元数据样板异常：%s", exc)
+
+        # 3. 清理 stop_crawler.flag
+        try:
+            flag_candidates = [
+                Path(config.BASE_DIR).parent / "local_bridge" / "runtime" / "stop_crawler.flag",
+                Path(config.DATA_ROOT).parent.parent / "local_bridge" / "runtime" / "stop_crawler.flag",
+                Path("/Users/kansang/Documents/Codex/2026-08-08/h/local_bridge/runtime/stop_crawler.flag"),
+            ]
+            for flag in flag_candidates:
+                if flag.exists():
+                    flag.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+        # 4. 更新 crawler_status.json
+        try:
+            status_candidates = [
+                Path(config.BASE_DIR).parent / "local_bridge" / "runtime" / "crawler_status.json",
+                Path(config.DATA_ROOT).parent.parent / "local_bridge" / "runtime" / "crawler_status.json",
+                Path("/Users/kansang/Documents/Codex/2026-08-08/h/local_bridge/runtime/crawler_status.json"),
+            ]
+            for status_file in status_candidates:
+                if status_file.parent.exists():
+                    status_file.write_text(json.dumps({
+                        "running": False,
+                        "stopped_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+                        "stats": self.stats,
+                    }, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError:
+            pass
 
     def start_browser(self) -> None:
         """启动配备反爬绕过与登录态保持的 Chrome 浏览器。"""
@@ -512,11 +594,15 @@ class CNKIPDFDownloader:
             self.downloaded_record_ids.add(metadata["record_id"])
             self.stats["success"] += 1
             logger.info("✅ 采集成功并完成 Obsidian 笔记落盘：%s", stub_path.name if stub_path else pdf_path.name)
-        except Exception as exc:
-            self.stats["failed"] += 1
-            logger.exception("采集文章失败 %s：%s", title, exc)
+        except (Exception, KeyboardInterrupt) as exc:
+            is_interrupt = isinstance(exc, KeyboardInterrupt)
+            self.stats["failed" if not is_interrupt else "metadata_only"] += 1
+            if is_interrupt:
+                logger.info("⚠️ 采集过程收到中断信号，立即保存当前文献元数据样板：%s", title)
+            else:
+                logger.exception("采集文章失败 %s：%s", title, exc)
             if metadata:
-                metadata["ingest_warning"] = f"采集异常：{exc}"
+                metadata["ingest_warning"] = "用户手动中止采集" if is_interrupt else f"采集异常：{exc}"
                 try:
                     upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR), stub_path)
                 except Exception:
@@ -525,6 +611,8 @@ class CNKIPDFDownloader:
                     write_manifest(metadata, Path(config.METADATA_DIR))
                 except OSError:
                     pass
+            if is_interrupt:
+                raise
         finally:
             try:
                 self.close_secondary_windows()
@@ -563,6 +651,9 @@ class CNKIPDFDownloader:
             self.wait_for_search_setup()
             page_number = 1
             while True:
+                if self.is_stop_requested():
+                    logger.info("🛑 检测到终止采集指令，正在退出页面循环并执行收尾归档...")
+                    break
                 logger.info("============ 正在处理第 %s 页 ============", page_number)
                 self._ensure_window_alive()
                 if self._captcha_visible():
@@ -573,6 +664,9 @@ class CNKIPDFDownloader:
                     break
                 logger.info("当前页共检测到 %s 篇文献，开始处理。", len(links))
                 for index in range(len(links)):
+                    if self.is_stop_requested():
+                        logger.info("🛑 检测到终止采集指令，停止处理后续文献，立即执行归档...")
+                        break
                     self._ensure_window_alive()
                     current = self.get_article_links()
                     if index >= len(current):
@@ -592,10 +686,16 @@ class CNKIPDFDownloader:
 
                     self.process_article(link, row)
 
+                if self.is_stop_requested():
+                    break
                 if not self.goto_next_page():
                     break
                 page_number += 1
         finally:
+            try:
+                self.finalize_and_archive()
+            except Exception as exc:
+                logger.error("执行收尾归档发生异常：%s", exc)
             self.print_summary()
             if self.driver:
                 try:
@@ -634,4 +734,8 @@ if __name__ == "__main__":
         downloader.run()
     except KeyboardInterrupt:
         logger.info("用户手动中止采集任务。")
+        try:
+            downloader.finalize_and_archive()
+        except Exception:
+            pass
         downloader.print_summary()

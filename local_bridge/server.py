@@ -14,6 +14,7 @@ import os
 import platform
 import re
 import shlex
+import signal
 import subprocess
 import urllib.parse
 from datetime import datetime
@@ -738,8 +739,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
 
     def _read_payload(self) -> dict[str, Any]:
         content_length = int(self.headers.get("Content-Length", "0"))
-        if content_length <= 0 or content_length > 1_000_000:
-            raise ValueError("请求内容为空或过大")
+        if content_length <= 0:
+            return {}
+        if content_length > 1_000_000:
+            raise ValueError("请求内容过大")
         payload = json.loads(self.rfile.read(content_length).decode("utf-8"))
         if not isinstance(payload, dict):
             raise ValueError("请求格式错误")
@@ -785,6 +788,8 @@ class BridgeHandler(BaseHTTPRequestHandler):
             elif parsed.path == "/api/intake/sync":
                 count = sync_crawler_metadata_stubs()
                 self._json({"ok": True, "synced": count})
+            elif parsed.path == "/api/cnki/status":
+                self._json(self._get_cnki_status())
             else:
                 self._json({"error": "not found"}, 404)
         except ValueError as exc:
@@ -800,6 +805,8 @@ class BridgeHandler(BaseHTTPRequestHandler):
             payload = self._read_payload()
             if self.path == "/api/cnki/start":
                 self._start_cnki(payload)
+            elif self.path == "/api/cnki/stop":
+                self._stop_cnki()
             elif self.path == "/api/obsidian/open":
                 self._open_obsidian(payload)
             elif self.path == "/api/intake/screening":
@@ -841,6 +848,67 @@ class BridgeHandler(BaseHTTPRequestHandler):
         result = render_legal_citation(relative, mode, pinpoint)
         self._json(result, 200 if result.get("ok") else 422)
 
+    def _get_cnki_status(self) -> dict[str, Any]:
+        pid_file = RUNTIME_ROOT / "crawler.pid"
+        status_file = RUNTIME_ROOT / "crawler_status.json"
+        running = False
+        pid: int | None = None
+        details: dict[str, Any] = {}
+        if status_file.exists():
+            try:
+                details = json.loads(status_file.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        if pid_file.exists():
+            try:
+                pid_val = int(pid_file.read_text(encoding="utf-8").strip())
+                os.kill(pid_val, 0)
+                running = True
+                pid = pid_val
+            except (OSError, ValueError):
+                running = False
+                pid_file.unlink(missing_ok=True)
+                if details.get("running"):
+                    details["running"] = False
+        return {
+            "ok": True,
+            "running": running,
+            "pid": pid,
+            "details": details,
+        }
+
+    def _stop_cnki(self) -> None:
+        RUNTIME_ROOT.mkdir(parents=True, exist_ok=True)
+        stop_flag = RUNTIME_ROOT / "stop_crawler.flag"
+        stop_flag.write_text("stop", encoding="utf-8")
+        pid_file = RUNTIME_ROOT / "crawler.pid"
+        signaled = False
+        if pid_file.exists():
+            try:
+                pid_val = int(pid_file.read_text(encoding="utf-8").strip())
+                os.kill(pid_val, signal.SIGINT)
+                signaled = True
+            except (OSError, ValueError):
+                pass
+        # 归档兜底保障：立即运行服务端同步，将所有已抓取元数据全部落盘入 Obsidian
+        archived = sync_crawler_metadata_stubs()
+        status_file = RUNTIME_ROOT / "crawler_status.json"
+        try:
+            status_file.write_text(json.dumps({
+                "running": False,
+                "stopped_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+                "message": "用户手动终止采集并归档入库",
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+            pid_file.unlink(missing_ok=True)
+        except OSError:
+            pass
+        self._json({
+            "ok": True,
+            "message": f"已成功终止知网采集！本次已确保归档 {archived} 篇样板至 Obsidian 论文库。",
+            "archivedCount": archived,
+            "signaled": signaled,
+        })
+
     def _start_cnki(self, payload: dict[str, Any]) -> None:
         downloader = CRAWLER_ROOT / "pdf_downloader.py"
         if not downloader.exists():
@@ -852,6 +920,19 @@ class BridgeHandler(BaseHTTPRequestHandler):
         if mode != "author" and not journals:
             raise ValueError("至少启用一种期刊")
         RUNTIME_ROOT.mkdir(parents=True, exist_ok=True)
+        stop_flag = RUNTIME_ROOT / "stop_crawler.flag"
+        if stop_flag.exists():
+            stop_flag.unlink(missing_ok=True)
+        status_file = RUNTIME_ROOT / "crawler_status.json"
+        try:
+            status_file.write_text(json.dumps({
+                "running": True,
+                "mode": mode,
+                "author": author,
+                "started_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError:
+            pass
         selection_path = RUNTIME_ROOT / "cnki_selection.json"
         selection_path.write_text(json.dumps({
             "mode": mode,

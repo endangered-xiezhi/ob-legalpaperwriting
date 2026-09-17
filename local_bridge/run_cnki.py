@@ -3,10 +3,48 @@
 
 from __future__ import annotations
 
+import atexit
+from datetime import datetime
 import json
 import os
+import signal
 import sys
 from pathlib import Path
+
+RUNTIME_ROOT = Path(__file__).resolve().parent / "runtime"
+
+
+def write_crawler_pid(pid: int, info: dict) -> None:
+    try:
+        RUNTIME_ROOT.mkdir(parents=True, exist_ok=True)
+        (RUNTIME_ROOT / "crawler.pid").write_text(str(pid), encoding="utf-8")
+        status = {
+            "running": True,
+            "pid": pid,
+            **info,
+            "started_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        }
+        (RUNTIME_ROOT / "crawler_status.json").write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def cleanup_crawler_state() -> None:
+    try:
+        pid_file = RUNTIME_ROOT / "crawler.pid"
+        if pid_file.exists():
+            pid_file.unlink(missing_ok=True)
+        status_file = RUNTIME_ROOT / "crawler_status.json"
+        if status_file.exists():
+            try:
+                status = json.loads(status_file.read_text(encoding="utf-8"))
+                status["running"] = False
+                status["stopped_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
+                status_file.write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+            except Exception:
+                pass
+    except OSError:
+        pass
 
 
 DEFAULT_CRAWLER_ROOT = Path(__file__).resolve().parent.parent / "cnki_crawler"
@@ -96,13 +134,33 @@ def main() -> None:
     print(f"样板卡片自动生成开关：{crawler_config.AUTO_CREATE_OBSIDIAN_STUB}")
     print("=" * 62)
 
+    # 注册 PID 与状态监听，支持外部安全终止
+    write_crawler_pid(os.getpid(), {"mode": mode, "author": author})
+    atexit.register(cleanup_crawler_state)
+
+    def sig_handler(signum, frame):
+        print(f"\n[LexTrace] 捕获终止信号 ({signum})，正在安全停止知网采集并完成 Obsidian 归档...")
+        cleanup_crawler_state()
+        sys.exit(0)
+
+    try:
+        signal.signal(signal.SIGINT, sig_handler)
+        signal.signal(signal.SIGTERM, sig_handler)
+    except Exception:
+        pass
+
     source = script_path.read_text(encoding="utf-8")
     namespace = {
         "__name__": "__main__",
         "__file__": str(script_path),
         "__package__": None,
     }
-    exec(compile(source, str(script_path), "exec"), namespace)
+    try:
+        exec(compile(source, str(script_path), "exec"), namespace)
+    except KeyboardInterrupt:
+        print("\n[LexTrace] 用户手动中止采集任务，已触发收尾归档。")
+    finally:
+        cleanup_crawler_state()
 
 
 if __name__ == "__main__":

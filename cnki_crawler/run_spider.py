@@ -78,8 +78,8 @@ def interactive_menu() -> None:
             strict_choice = input("👉 是否严格全字匹配核心期刊？[y/N] (默认 N，宽松包含'法'或'知识产权'期刊): ").strip().lower()
             config.STRICT_JOURNAL_MATCH = strict_choice in ("y", "yes", "1")
 
-        obsidian_choice = input("👉 是否自动在 Obsidian 中创建待审核笔记样板？[y/N] (默认 N): ").strip().lower()
-        config.AUTO_CREATE_OBSIDIAN_STUB = obsidian_choice in ("y", "yes", "1")
+        obsidian_choice = input("👉 是否自动在 Obsidian 中创建待审核笔记样板？[Y/n] (默认 Y): ").strip().lower()
+        config.AUTO_CREATE_OBSIDIAN_STUB = obsidian_choice not in ("n", "no", "0")
 
         txt_choice = input("👉 是否提取带页码标记的分页 TXT 与页码对照索引？[Y/n] (默认 Y): ").strip().lower()
         config.EXTRACT_PAGINATED_TXT = txt_choice not in ("n", "no", "0")
@@ -93,8 +93,8 @@ def interactive_menu() -> None:
 
     # 询问是否开启 Obsidian 联动（若之前未在第3项设置）
     if choice in ("1", "2"):
-        obs_input = input("\n👉 是否同步在本地 Obsidian 论文库中生成待审核笔记样板？[y/N] (回车默认 N，只下载PDF/TXT/JSON): ").strip().lower()
-        config.AUTO_CREATE_OBSIDIAN_STUB = obs_input in ("y", "yes", "1")
+        obs_input = input("\n👉 是否同步在本地 Obsidian 论文库中生成待审核笔记样板？[Y/n] (回车默认 Y，自动生成样板): ").strip().lower()
+        config.AUTO_CREATE_OBSIDIAN_STUB = obs_input not in ("n", "no", "0")
         if config.AUTO_CREATE_OBSIDIAN_STUB:
             print(f"   已开启 Obsidian 联动，样板目录：{config.PAPER_STUB_DIR}")
 
