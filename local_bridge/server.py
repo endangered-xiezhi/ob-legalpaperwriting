@@ -951,12 +951,17 @@ class BridgeHandler(BaseHTTPRequestHandler):
             launch_file = RUNTIME_ROOT / "launch_cnki.command"
             launch_file.write_text(
                 "#!/bin/zsh\n"
+                "trap 'echo \"\\n🛑 收到中断信号，已触发安全收尾归档。\"; read \"?按回车关闭窗口…\"; exit 0' INT TERM\n"
                 f"cd {shlex.quote(str(PROJECT_ROOT))}\n"
                 f"{' '.join(shlex.quote(part) for part in command)}\n"
                 "exit_code=$?\n"
                 "echo\n"
-                "echo \"LexTrace：知网采集进程已结束，退出码 $exit_code。\"\n"
-                "echo \"下一步：回到LexTrace待处理队列进行初筛或交给Agent。\"\n"
+                "if [ $exit_code -eq 0 ]; then\n"
+                "    echo \"LexTrace：知网采集进程已结束，文献已安全同步至 Obsidian 论文库。\"\n"
+                "else\n"
+                "    echo \"LexTrace：知网采集进程已结束（退出码 $exit_code），已执行收尾对齐。\"\n"
+                "fi\n"
+                "echo \"下一步：回到 LexTrace 待处理队列进行初筛或交给 Agent。\"\n"
                 "read \"?按回车关闭窗口…\"\n",
                 encoding="utf-8",
             )
@@ -964,7 +969,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
             subprocess.Popen(["open", "-a", "Terminal", str(launch_file)])
         else:
             subprocess.Popen(command, cwd=str(PROJECT_ROOT))
-        msg = f"已启动作者检索模式（作者：{author}）" if mode == "author" else f"已启动知网爬虫（{len(journals)} 种期刊）；采集后会自动同步至 Obsidian 待审核样板。"
+        if mode == "author":
+            msg = f"已启动作者检索模式（指定作者：{author}）" if author else "已启动作者全量采集模式（不限作者全量入库）"
+        else:
+            msg = f"已启动知网爬虫（{len(journals)} 种期刊）；采集后会自动同步至 Obsidian 待审核样板。"
         self._json({
             "ok": True,
             "message": msg,

@@ -7,6 +7,7 @@ import atexit
 from datetime import datetime
 import json
 import os
+import re
 import signal
 import sys
 from pathlib import Path
@@ -111,7 +112,10 @@ def main() -> None:
     if mode == "author":
         crawler_config.RUN_MODE = "author"
         crawler_config.FILTER_BY_JOURNAL = False
-        crawler_config.TARGET_AUTHORS = [author] if author else []
+        if author:
+            crawler_config.TARGET_AUTHORS = [a.strip() for a in re.split(r"[,，\s]+", author) if a.strip()]
+        else:
+            crawler_config.TARGET_AUTHORS = []
     else:
         crawler_config.RUN_MODE = "journal"
         crawler_config.FILTER_BY_JOURNAL = True
@@ -124,7 +128,8 @@ def main() -> None:
     crawler_config.PAPER_STUB_DIR = str(vault_root / "知识产权" / "论文库")
 
     print("=" * 62)
-    print(f"LexTrace 采集模式：{'作者检索模式 (' + author + ')' if mode == 'author' else '期刊范围过滤模式'}")
+    author_desc = ('指定作者：' + '、'.join(crawler_config.TARGET_AUTHORS)) if crawler_config.TARGET_AUTHORS else '不限作者全量采集'
+    print(f"LexTrace 采集模式：{'作者检索模式 (' + author_desc + ')' if mode == 'author' else '期刊范围过滤模式'}")
     if mode != "author":
         print("已载入期刊范围：")
         for name in journals:
@@ -140,8 +145,11 @@ def main() -> None:
 
     def sig_handler(signum, frame):
         print(f"\n[LexTrace] 捕获终止信号 ({signum})，正在安全停止知网采集并完成 Obsidian 归档...")
-        cleanup_crawler_state()
-        sys.exit(0)
+        try:
+            (RUNTIME_ROOT / "stop_crawler.flag").write_text("stop", encoding="utf-8")
+        except OSError:
+            pass
+        raise KeyboardInterrupt("用户按键或外部终止信号")
 
     try:
         signal.signal(signal.SIGINT, sig_handler)
@@ -157,8 +165,10 @@ def main() -> None:
     }
     try:
         exec(compile(source, str(script_path), "exec"), namespace)
-    except KeyboardInterrupt:
-        print("\n[LexTrace] 用户手动中止采集任务，已触发收尾归档。")
+    except (KeyboardInterrupt, SystemExit):
+        print("\n[LexTrace] 知网采集任务已安全中止，所有已抓取文献已成功归档至 Obsidian。")
+    except Exception as exc:
+        print(f"\n[LexTrace] 采集过程异常：{exc}")
     finally:
         cleanup_crawler_state()
 

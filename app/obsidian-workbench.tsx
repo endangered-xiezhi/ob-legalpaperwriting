@@ -677,7 +677,7 @@ ${materials}
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: spiderMode,
-          author: spiderMode === "author" ? selectedAuthor : undefined,
+          author: spiderMode === "author" ? (selectedAuthor.trim() || "") : undefined,
           journals: enabled,
           strictJournal,
           researchQuestion,
@@ -1262,23 +1262,77 @@ ${materials}
 
             {spiderMode === "author" ? (
               <div className="mode-card">
-                <span className="eyebrow">AUTHOR MODE · 知产名家全量检索</span>
-                <p style={{ margin: "4px 0 10px", color: "var(--muted)", fontSize: 13.5 }}>聚焦知产学界代表性学者全量文献，穿透作者学术成长与研究路径流变：</p>
+                <div className="panel-head" style={{ marginBottom: 6 }}>
+                  <span className="eyebrow">AUTHOR MODE · 学者全量检索与作者核验</span>
+                  {selectedAuthor.trim() ? (
+                    <span className="badge" style={{ fontSize: 11.5, background: "rgba(37,99,235,0.1)", color: "var(--accent)" }}>
+                      指定学者：{selectedAuthor.trim()}
+                    </span>
+                  ) : (
+                    <span className="badge" style={{ fontSize: 11.5, background: "rgba(16,185,129,0.1)", color: "#059669" }}>
+                      不限作者 · 全量下载
+                    </span>
+                  )}
+                </div>
+                <p style={{ margin: "4px 0 10px", color: "var(--muted)", fontSize: 13.5 }}>
+                  突破期刊限制，全量采集指定学者的全部学术成果；亦可留空不限作者全量入库：
+                </p>
+
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+                  <input
+                    type="text"
+                    value={selectedAuthor}
+                    onChange={(e) => setSelectedAuthor(e.target.value)}
+                    placeholder="✍️ 手动输入任意学者姓名（如：崔国斌、蒋舸、王利明等），留空则全量抓取"
+                    style={{
+                      flex: 1,
+                      padding: "9px 12px",
+                      border: "1px solid var(--line)",
+                      borderRadius: 8,
+                      fontSize: 13.5,
+                      background: "var(--card-bg, #fff)",
+                      color: "inherit",
+                      outline: "none",
+                    }}
+                  />
+                  {selectedAuthor ? (
+                    <button
+                      type="button"
+                      className="outline-button"
+                      onClick={() => setSelectedAuthor("")}
+                      title="清空作者，结果列表全部文章直接全量下载"
+                      style={{ padding: "8px 12px", fontSize: 12.5, whiteSpace: "nowrap" }}
+                    >
+                      清空（不限作者）
+                    </button>
+                  ) : null}
+                </div>
+
+                <div style={{ marginBottom: 6 }}>
+                  <span style={{ fontSize: 12.5, color: "var(--muted)" }}>
+                    💡 推荐知产学者（点击快捷填入，仅作参考提示，可自由修改为任意作者）：
+                  </span>
+                </div>
                 <div className="author-tags">
                   {FAMOUS_AUTHORS.map((author) => (
                     <button
                       type="button"
                       key={author}
-                      className={selectedAuthor === author ? "active" : ""}
-                      onClick={() => setSelectedAuthor(author)}
+                      className={selectedAuthor.trim() === author ? "active" : ""}
+                      onClick={() => setSelectedAuthor(selectedAuthor.trim() === author ? "" : author)}
+                      title={selectedAuthor.trim() === author ? "再次点击清空作者" : `快捷填入：${author}`}
                     >
                       {author}
                     </button>
                   ))}
                 </div>
-                <div className="mode-cli-box">
+                <div className="mode-cli-box" style={{ marginTop: 12 }}>
                   <small>CLI 命令行执行指令：</small>
-                  <code>python3 scripts/cnki_spider.py --mode author --author "{selectedAuthor}"</code>
+                  <code>
+                    {selectedAuthor.trim()
+                      ? `python3 scripts/cnki_spider.py --mode author --author "${selectedAuthor.trim()}"`
+                      : `python3 scripts/cnki_spider.py --mode author`}
+                  </code>
                 </div>
               </div>
             ) : (

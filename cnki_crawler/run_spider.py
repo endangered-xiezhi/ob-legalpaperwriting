@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -46,43 +47,66 @@ def interactive_menu() -> None:
     print("  [1] 🎯 法学核心期刊模式 (CLSCI)")
     print("      适合专题检索（如'数据确权'、'AIGC'），仅保留16种法学核心期刊论文，自动跳过其他期刊。\n")
     print("  [2] ✍️  作者模式 / 全量采集模式 (🌟 推荐用于整理专家学者论文集)")
-    print("      解除期刊限制！不管期刊是什么，检索出来的全部文献一律自动下载、解析并归档！\n")
+    print("      解除期刊限制！检索列表出来的文献全部自动下载、解析并归档！\n")
     print("  [3] ⚙️  高级自定义模式")
     print("      自定义设置期刊白名单、Obsidian 同步开关、TXT 提取等参数。\n")
 
-    choice = input("👉 请输入模式编号 [1/2/3] (直接按回车默认 [1]): ").strip()
+    try:
+        choice = input("👉 请输入模式编号 [1/2/3] (直接按回车默认 [1]，输入 q 退出): ").strip()
+    except (KeyboardInterrupt, EOFError):
+        print("\n🛑 用户取消启动。")
+        sys.exit(0)
+
+    if choice.lower() in ("q", "quit", "exit"):
+        print("\n🛑 已退出。")
+        sys.exit(0)
 
     if choice == "2":
         # 作者模式
         config.RUN_MODE = "author"
         config.FILTER_BY_JOURNAL = False
         print("\n✅ 已选择：【作者模式（全量采集）】")
-        author_input = input("👉 是否限制特定作者姓名校验？(直接按回车表示不限作者，结果全量下载；若需要请直接输入姓名如'崔国斌'): ").strip()
+        print("   💡 说明：")
+        print("   • 直接按【回车】：不限学者姓名，知网检索出的全部文献一律全量下载入库（推荐！）")
+        print("   • 手动输入姓名：支持任意学者（如'崔国斌'、'蒋舸'、'王利明'等，多个学者用逗号分隔）")
+        print("   • 常见知产学者参考提示：崔国斌、蒋舸、冯术杰、王迁、孔祥俊、易继明、李琛、张平、熊丙万等")
+        try:
+            author_input = input("\n👉 请输入学者姓名校验 (直接按回车表示不限作者全量采集；输入 q 退出): ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\n🛑 用户取消启动。")
+            sys.exit(0)
+        if author_input.lower() in ("q", "quit", "exit"):
+            print("\n🛑 已退出。")
+            sys.exit(0)
         if author_input:
-            config.TARGET_AUTHORS = [a.strip() for a in author_input.replace("，", ",").split(",") if a.strip()]
-            print(f"   已设置作者核验名单：{'、'.join(config.TARGET_AUTHORS)}")
+            config.TARGET_AUTHORS = [a.strip() for a in re.split(r"[,，\s]+", author_input) if a.strip()]
+            print(f"   已设置学者核验名单：{'、'.join(config.TARGET_AUTHORS)}")
         else:
             config.TARGET_AUTHORS = []
-            print("   已设置：不限作者姓名，检索列表全部论文直接全量下载。")
+            print("   已设置：不限学者姓名，知网检索列表全部论文直接全量下载入库。")
 
     elif choice == "3":
         # 自定义高级模式
         print("\n--- 高级自定义设置 ---")
-        filter_choice = input("👉 是否开启期刊过滤？[Y/n] (默认 Y): ").strip().lower()
-        if filter_choice in ("n", "no", "0"):
-            config.FILTER_BY_JOURNAL = False
-            config.RUN_MODE = "author"
-        else:
-            config.FILTER_BY_JOURNAL = True
-            config.RUN_MODE = "journal"
-            strict_choice = input("👉 是否严格全字匹配核心期刊？[y/N] (默认 N，宽松包含'法'或'知识产权'期刊): ").strip().lower()
-            config.STRICT_JOURNAL_MATCH = strict_choice in ("y", "yes", "1")
+        try:
+            filter_choice = input("👉 是否开启期刊过滤？[Y/n] (默认 Y): ").strip().lower()
+            if filter_choice in ("n", "no", "0"):
+                config.FILTER_BY_JOURNAL = False
+                config.RUN_MODE = "author"
+            else:
+                config.FILTER_BY_JOURNAL = True
+                config.RUN_MODE = "journal"
+                strict_choice = input("👉 是否严格全字匹配核心期刊？[y/N] (默认 N，宽松包含'法'或'知识产权'期刊): ").strip().lower()
+                config.STRICT_JOURNAL_MATCH = strict_choice in ("y", "yes", "1")
 
-        obsidian_choice = input("👉 是否自动在 Obsidian 中创建待审核笔记样板？[Y/n] (默认 Y): ").strip().lower()
-        config.AUTO_CREATE_OBSIDIAN_STUB = obsidian_choice not in ("n", "no", "0")
+            obsidian_choice = input("👉 是否自动在 Obsidian 中创建待审核笔记样板？[Y/n] (默认 Y): ").strip().lower()
+            config.AUTO_CREATE_OBSIDIAN_STUB = obsidian_choice not in ("n", "no", "0")
 
-        txt_choice = input("👉 是否提取带页码标记的分页 TXT 与页码对照索引？[Y/n] (默认 Y): ").strip().lower()
-        config.EXTRACT_PAGINATED_TXT = txt_choice not in ("n", "no", "0")
+            txt_choice = input("👉 是否提取带页码标记的分页 TXT 与页码对照索引？[Y/n] (默认 Y): ").strip().lower()
+            config.EXTRACT_PAGINATED_TXT = txt_choice not in ("n", "no", "0")
+        except (KeyboardInterrupt, EOFError):
+            print("\n🛑 用户取消启动。")
+            sys.exit(0)
 
     else:
         # 默认法学核心期刊模式
@@ -93,10 +117,14 @@ def interactive_menu() -> None:
 
     # 询问是否开启 Obsidian 联动（若之前未在第3项设置）
     if choice in ("1", "2"):
-        obs_input = input("\n👉 是否同步在本地 Obsidian 论文库中生成待审核笔记样板？[Y/n] (回车默认 Y，自动生成样板): ").strip().lower()
-        config.AUTO_CREATE_OBSIDIAN_STUB = obs_input not in ("n", "no", "0")
-        if config.AUTO_CREATE_OBSIDIAN_STUB:
-            print(f"   已开启 Obsidian 联动，样板目录：{config.PAPER_STUB_DIR}")
+        try:
+            obs_input = input("\n👉 是否同步在本地 Obsidian 论文库中生成待审核笔记样板？[Y/n] (回车默认 Y，自动生成样板): ").strip().lower()
+            config.AUTO_CREATE_OBSIDIAN_STUB = obs_input not in ("n", "no", "0")
+            if config.AUTO_CREATE_OBSIDIAN_STUB:
+                print(f"   已开启 Obsidian 联动，样板目录：{config.PAPER_STUB_DIR}")
+        except (KeyboardInterrupt, EOFError):
+            print("\n🛑 用户取消启动。")
+            sys.exit(0)
 
     print("\n" + "=" * 70)
     print("🚀 配置就绪，正在准备启动采集器……")
@@ -153,7 +181,7 @@ def parse_arguments() -> bool:
         config.FILTER_BY_JOURNAL = True
 
     if args.authors:
-        config.TARGET_AUTHORS = [a.strip() for a in args.authors.split(",") if a.strip()]
+        config.TARGET_AUTHORS = [a.strip() for a in re.split(r"[,，\s]+", args.authors) if a.strip()]
 
     if args.strict:
         config.STRICT_JOURNAL_MATCH = True
@@ -168,16 +196,23 @@ def parse_arguments() -> bool:
 
 
 def main() -> None:
-    has_args = parse_arguments()
-    if not has_args:
-        interactive_menu()
+    try:
+        has_args = parse_arguments()
+        if not has_args:
+            interactive_menu()
+    except (KeyboardInterrupt, EOFError):
+        print("\n🛑 用户取消启动。")
+        sys.exit(0)
 
     downloader = CNKIPDFDownloader()
     try:
         downloader.run()
-    except KeyboardInterrupt:
-        print("\n\n🛑 用户手动终止采集程序。")
-        downloader.print_summary()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    except Exception as exc:
+        print(f"\n❌ 采集器异常退出：{exc}")
+        sys.exit(1)
+    sys.exit(0)
 
 
 if __name__ == "__main__":

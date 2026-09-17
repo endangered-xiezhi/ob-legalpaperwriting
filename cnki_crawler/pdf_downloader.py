@@ -20,6 +20,8 @@ import os
 import random
 import re
 import shutil
+import signal
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -68,6 +70,8 @@ class CNKIPDFDownloader:
     def __init__(self) -> None:
         self.driver: webdriver.Chrome | None = None
         self.main_window: str | None = None
+        self._stop_requested = False
+        self._is_terminating = False
         self.stats = {
             "success": 0,
             "stubs": 0,
@@ -77,6 +81,19 @@ class CNKIPDFDownloader:
             "start_time": time.time(),
         }
         self.downloaded_titles, self.downloaded_record_ids = self.load_download_history()
+
+    def setup_signals(self) -> None:
+        """在终端运行环境下注册 SIGINT (Ctrl+C) 与 SIGTERM 监听，支持优雅秒级收尾。"""
+        def _sig_handler(signum, frame):
+            logger.info("\n🛑 [CNKI Spider] 接收到终端终止信号 (%s)，正在安全停止采集并对齐 Obsidian 论文库...", signum)
+            self._stop_requested = True
+            raise KeyboardInterrupt("用户按键或系统终止信号")
+
+        try:
+            signal.signal(signal.SIGINT, _sig_handler)
+            signal.signal(signal.SIGTERM, _sig_handler)
+        except Exception:
+            pass
 
     def load_download_history(self) -> tuple[set[str], set[str]]:
         """读取本地已有 PDF 与元数据记录，用于增量去重。"""
@@ -99,16 +116,24 @@ class CNKIPDFDownloader:
         return titles, record_ids
 
     def is_stop_requested(self) -> bool:
-        """检查外部是否有终止采集的控制指令（如来自前端UI或信号文件的终止）。"""
+        """检查外部是否有终止采集的控制指令（如来自前端UI、命令行 Ctrl+C 或信号文件）。"""
+        if self._stop_requested:
+            return True
         flag_candidates = [
             Path(config.BASE_DIR).parent / "local_bridge" / "runtime" / "stop_crawler.flag",
             Path(config.DATA_ROOT).parent.parent / "local_bridge" / "runtime" / "stop_crawler.flag",
             Path("/Users/kansang/Documents/Codex/2026-08-08/h/local_bridge/runtime/stop_crawler.flag"),
         ]
-        return any(f.exists() for f in flag_candidates)
+        if any(f.exists() for f in flag_candidates):
+            self._stop_requested = True
+            return True
+        return False
 
     def finalize_and_archive(self) -> None:
         """终止后归档与双仓对齐收尾流程：确保所有已下载和已抓取文献100%沉淀至Obsidian。"""
+        if self._is_terminating:
+            return
+        self._is_terminating = True
         logger.info("📦 正在执行终止收尾：扫描未归档文件并对齐 Obsidian 论文库...")
         # 1. 扫描临时 downloads 目录中是否有已下载完毕的 PDF
         try:
@@ -129,7 +154,8 @@ class CNKIPDFDownloader:
         try:
             meta_dir = Path(config.METADATA_DIR)
             stub_dir = Path(config.PAPER_STUB_DIR)
-            if meta_dir.exists() and stub_dir.exists():
+            stub_dir.mkdir(parents=True, exist_ok=True)
+            if meta_dir.exists():
                 archived_new = 0
                 for json_file in meta_dir.glob("*.json"):
                     try:
@@ -137,11 +163,10 @@ class CNKIPDFDownloader:
                         if not data.get("title"):
                             continue
                         existing = find_existing_stub(stub_dir, data)
-                        if not existing:
-                            _, created = upsert_obsidian_stub(data, stub_dir)
-                            if created:
-                                archived_new += 1
-                                self.stats["stubs"] += 1
+                        stub_path, created = upsert_obsidian_stub(data, stub_dir, existing)
+                        if created:
+                            archived_new += 1
+                            self.stats["stubs"] += 1
                     except Exception:
                         continue
                 if archived_new > 0:
@@ -248,22 +273,48 @@ class CNKIPDFDownloader:
             pass
 
     def wait_for_user_login(self) -> None:
-        input("\n📌 【第一步】：请在弹出的 Chrome 浏览器中登录知网（如校园网认证、CARSI 或个人账号），登录成功后在此窗口按【回车】继续……")
+        print("\n" + "=" * 66)
+        print("📌 【第一步】：请在弹出的 Chrome 浏览器中登录知网")
+        print("   （如校园网认证、CARSI 认证或知网个人账号）")
+        print("   👉 登录成功后在此窗口按【回车】继续；或随时输入【q】/ 按【Ctrl+C】安全终止退出并归档")
+        print("=" * 66)
+        try:
+            resp = input("👉 请按回车继续 (输入 q 退出): ").strip().lower()
+            if resp in ("q", "quit", "exit", "stop"):
+                print("\n🛑 用户在登录步骤选择终止退出。")
+                self._stop_requested = True
+                raise KeyboardInterrupt("用户在登录步骤选择退出")
+        except (KeyboardInterrupt, EOFError):
+            self._stop_requested = True
+            raise KeyboardInterrupt("用户按键或信号终止")
 
     def wait_for_search_setup(self) -> None:
         mode = getattr(config, "RUN_MODE", "journal")
-        if mode == "author":
+        if mode == "author" or not getattr(config, "FILTER_BY_JOURNAL", True):
             target_authors = getattr(config, "TARGET_AUTHORS", [])
-            author_tip = f"（目标作者：{'、'.join(target_authors)}）" if target_authors else "（不限期刊，全量下载）"
-            print(f"\n📌 【第二步 - 作者模式 {author_tip}】：")
-            print("   请在知网页面设置作者姓名并点击检索；进入结果列表后，建议将每页显示数量设为【50条】。")
-            print("   💡 本模式下已关闭期刊限制，列表中的全部文献均会按顺序自动下载并归档！")
+            if isinstance(target_authors, str):
+                target_authors = [a.strip() for a in re.split(r"[,，\s]+", target_authors) if a.strip()]
+            author_tip = f"（目标学者：{'、'.join(target_authors)}）" if target_authors else "（不限学者，结果全部全量下载）"
+            print("\n" + "=" * 66)
+            print(f"📌 【第二步 - 学者/全量采集模式 {author_tip}】：")
+            print("   请在知网页面输入学者姓名并点击检索；进入结果列表后，建议将每页显示数量设为【50条】。")
+            print("   💡 本模式下已解除期刊限制，列表中的全部文献均会按顺序自动下载并归档！")
         else:
-            print("\n📌 【第二步 - 期刊过滤模式】：")
+            print("\n" + "=" * 66)
+            print("📌 【第二步 - 法学核心期刊过滤模式】：")
             print("   请在知网页面输入主题/关键词检索；进入结果列表后，建议将每页显示数量设为【50条】。")
             print("   💡 本模式将仅下载符合法学核心期刊白名单的文献，其它期刊将自动跳过。")
-
-        input("   确认已进入结果列表页后，在此窗口按【回车】正式开始自动采集……")
+        print("   👉 确认已进入结果列表页后按【回车】正式开始采集；或输入【q】/ 按【Ctrl+C】安全终止退出")
+        print("=" * 66)
+        try:
+            resp = input("👉 请按回车正式开始自动采集 (输入 q 退出): ").strip().lower()
+            if resp in ("q", "quit", "exit", "stop"):
+                print("\n🛑 用户在检索设置步骤选择终止退出。")
+                self._stop_requested = True
+                raise KeyboardInterrupt("用户在检索设置步骤选择退出")
+        except (KeyboardInterrupt, EOFError):
+            self._stop_requested = True
+            raise KeyboardInterrupt("用户按键或信号终止")
         self._ensure_window_alive()
         assert self.driver is not None
         self.main_window = self.driver.current_window_handle
@@ -338,17 +389,19 @@ class CNKIPDFDownloader:
         # 模式 1：作者模式（全量采集，不限制期刊）
         if mode == "author" or not getattr(config, "FILTER_BY_JOURNAL", True):
             target_authors = getattr(config, "TARGET_AUTHORS", [])
+            if isinstance(target_authors, str):
+                target_authors = [a.strip() for a in re.split(r"[,，\s]+", target_authors) if a.strip()]
             if not target_authors:
                 # 用户没有指定具体姓名，则检索出来的所有条目一律全量下载
                 return True
 
-            # 若指定了作者名单，则核实作者列表或题名是否匹配
+            # 若指定了作者名单，则核实作者列表是否匹配
             authors = [str(a).strip() for a in row_metadata.get("authors", [])]
             for target in target_authors:
                 if any(target in a for a in authors):
                     return True
 
-            logger.info("⏭️ 跳过非指定作者文献：%s（作者：%s）", row_metadata.get("title"), "、".join(authors))
+            logger.info("⏭️ 跳过非指定作者文献：%s（文献作者：%s；筛选作者：%s）", row_metadata.get("title"), "、".join(authors), "、".join(target_authors))
             return False
 
         # 模式 2：期刊过滤模式（仅限白名单期刊）
@@ -646,18 +699,23 @@ class CNKIPDFDownloader:
     def run(self) -> None:
         self.start_browser()
         assert self.driver is not None
+        self.setup_signals()
         try:
             self.wait_for_user_login()
             self.wait_for_search_setup()
             page_number = 1
-            while True:
-                if self.is_stop_requested():
-                    logger.info("🛑 检测到终止采集指令，正在退出页面循环并执行收尾归档...")
-                    break
+            while not self.is_stop_requested():
                 logger.info("============ 正在处理第 %s 页 ============", page_number)
                 self._ensure_window_alive()
                 if self._captcha_visible():
-                    input("⚠️ 结果列表页要求滑动验证，请手动完成后按回车继续……")
+                    try:
+                        c_resp = input("⚠️ 结果列表页要求滑动验证，请手动完成后按回车继续 (输入 q 退出)……").strip().lower()
+                        if c_resp in ("q", "quit", "exit", "stop"):
+                            self._stop_requested = True
+                            break
+                    except (KeyboardInterrupt, EOFError):
+                        self._stop_requested = True
+                        break
                 links = self.get_article_links()
                 if not links:
                     logger.info("当前页未检测到更多文章链接。")
@@ -691,6 +749,8 @@ class CNKIPDFDownloader:
                 if not self.goto_next_page():
                     break
                 page_number += 1
+        except (KeyboardInterrupt, SystemExit):
+            logger.info("🛑 知网采集进程已捕获终止指令，正在退出并执行安全归档。")
         finally:
             try:
                 self.finalize_and_archive()
@@ -702,13 +762,20 @@ class CNKIPDFDownloader:
                     self.driver.quit()
                 except Exception:
                     pass
+                self.driver = None
 
     def print_summary(self) -> None:
         duration = time.time() - self.stats["start_time"]
-        mode_desc = "✍️ 作者模式（不限期刊全量下载）" if getattr(config, "RUN_MODE", "") == "author" else "🎯 期刊模式（CLSCI法学核心过滤）"
+        mode = getattr(config, "RUN_MODE", "")
+        target_authors = getattr(config, "TARGET_AUTHORS", [])
+        if mode == "author" or not getattr(config, "FILTER_BY_JOURNAL", True):
+            mode_desc = f"✍️ 作者模式（指定学者：{'、'.join(target_authors)}）" if target_authors else "✍️ 作者/全量模式（不限学者全量下载）"
+        else:
+            mode_desc = "🎯 期刊模式（CLSCI法学核心过滤）"
+        status_banner = "🛑 知网文献采集已安全终止 (已完成全部数据对齐与归档)" if self._stop_requested else "🎉 知网文献采集整理完成"
         summary = f"""
 ============================================================
-              🎉 知网文献采集整理完成
+              {status_banner}
 ============================================================
   运行模式: {mode_desc}
   耗时: {duration:.1f} 秒
@@ -718,6 +785,7 @@ class CNKIPDFDownloader:
   Obsidian卡片创建: {self.stats['stubs']} 篇
   失败: {self.stats['failed']} 篇
 ------------------------------------------------------------
+  Obsidian 论文库: {config.PAPER_STUB_DIR}
   PDF 归档目录: {config.DATA_ROOT}
   分页 TXT 目录: {config.TXT_DIR}
   结构化元数据: {config.METADATA_DIR}
@@ -732,10 +800,9 @@ if __name__ == "__main__":
     downloader = CNKIPDFDownloader()
     try:
         downloader.run()
-    except KeyboardInterrupt:
-        logger.info("用户手动中止采集任务。")
-        try:
-            downloader.finalize_and_archive()
-        except Exception:
-            pass
-        downloader.print_summary()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    except Exception as exc:
+        logger.exception("采集器遇到异常退出：%s", exc)
+        sys.exit(1)
+    sys.exit(0)
