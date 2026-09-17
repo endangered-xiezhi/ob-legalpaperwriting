@@ -171,6 +171,52 @@ class BridgeIndexTests(unittest.TestCase):
             "参见测试作者：《引注论文》，载《测试法学》2026年第2期，第15-16页。",
         )
 
+    def test_detect_discipline_and_update_domain(self) -> None:
+        path_ip = self.knowledge / "论文库" / "专利侵权判定研究.md"
+        write_note(
+            path_ip,
+            '\n'.join([
+                'schema_version: 2',
+                'record_id: "CNKI-IP-1"',
+                'record_status: "intake"',
+                'title: "专利侵权判定研究"',
+                'author:',
+                '  - "张三"',
+                'year: "2025"',
+                'journal: "知识产权"',
+            ]),
+            "<!-- LEXTRACE:GENERATED-STUB -->\n\n# 专利侵权判定研究\n\n## 原文摘要\n本文探讨专利等同原则。",
+        )
+        path_other = self.knowledge / "论文库" / "法定物权的自由展开.md"
+        write_note(
+            path_other,
+            '\n'.join([
+                'schema_version: 2',
+                'record_id: "CNKI-OTHER-1"',
+                'record_status: "intake"',
+                'title: "法定物权的自由展开"',
+                'author:',
+                '  - "李四"',
+                'year: "2023"',
+                'journal: "中国法学"',
+            ]),
+            "<!-- LEXTRACE:GENERATED-STUB -->\n\n# 法定物权的自由展开\n\n## 原文摘要\n经济分析与法律教义。",
+        )
+        payload = server.navigation_payload()
+        intake_map = {n["recordId"]: n for n in payload["intake"]}
+        self.assertEqual(intake_map["CNKI-IP-1"]["discipline"], "ip")
+        self.assertEqual(intake_map["CNKI-IP-1"]["disciplineLabel"], "知识产权法")
+        self.assertEqual(intake_map["CNKI-OTHER-1"]["discipline"], "other")
+        self.assertEqual(intake_map["CNKI-OTHER-1"]["disciplineLabel"], "其他部门法")
+
+        # Test updating domain to reclassify
+        rel = path_other.relative_to(self.vault).as_posix()
+        server.update_intake_screening(rel, "pending", "转入知产交叉研究", domain="知识产权法")
+        updated_payload = server.navigation_payload()
+        updated_map = {n["recordId"]: n for n in updated_payload["intake"]}
+        self.assertEqual(updated_map["CNKI-OTHER-1"]["discipline"], "ip")
+        self.assertEqual(updated_map["CNKI-OTHER-1"]["domain"], "知识产权法")
+
 
 if __name__ == "__main__":
     unittest.main()

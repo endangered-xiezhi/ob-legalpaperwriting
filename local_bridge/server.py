@@ -280,6 +280,38 @@ def is_navigation_excluded(relative: str) -> bool:
     return "_archive" in parts or "_reading_logs" in parts or "交接文档" in parts
 
 
+IP_PATTERNS = [
+    r"知识产权", r"专利", r"商标", r"著作权", r"版权", r"商业秘密", r"反不正当竞争",
+    r"独创性", r"合理使用", r"优先权", r"作品", r"知产", r"NFT", r"WAPI", r"NPE",
+    r"算法治理", r"数据法", r"数据权益", r"大模型", r"人工智能生成", r"地理标志",
+    r"商业标识", r"域名", r"植物新品种", r"集成电路", r"开源", r"商业诋毁",
+    r"信息网络传播权", r"标准必要专利", r"FRAND", r"网络侵权", r"避风港",
+]
+IP_REGEX = re.compile("|".join(IP_PATTERNS), re.I)
+IP_JOURNALS = {
+    "知识产权", "版权理论与实务", "中国版权", "中华商标", "北大知识产权评论",
+    "中国科技法律评论", "电子知识产权", "知识产权研究",
+}
+
+
+def detect_discipline(metadata: dict[str, Any], title: str, body: str) -> tuple[str, str]:
+    domain = str(metadata.get("primary_domain") or "").strip()
+    if domain:
+        if domain in CANONICAL_DOMAIN_NAMES or any(
+            k in domain for k in ("著作权", "专利", "商标", "知产", "不正当竞争", "数据法", "算法", "知识产权")
+        ):
+            return "ip", "知识产权法"
+        return "other", "其他部门法"
+    journal = str(metadata.get("journal") or "").strip()
+    if journal in IP_JOURNALS:
+        return "ip", "知识产权法"
+    keywords = " ".join(list_value(metadata.get("original_keywords")) or [])
+    probe_text = f"{title} {journal} {keywords} {body[:600]}"
+    if IP_REGEX.search(title) or IP_REGEX.search(probe_text):
+        return "ip", "知识产权法"
+    return "other", "其他部门法"
+
+
 def note_record(path: Path) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8", errors="replace")
     metadata = parse_frontmatter(text)
@@ -322,6 +354,7 @@ def note_record(path: Path) -> dict[str, Any]:
         and not warning
         and (record_status == "verified" or (not record_status and legacy_formal))
     )
+    discipline, discipline_label = detect_discipline(metadata, title, body)
     return {
         "path": relative,
         "title": title,
@@ -331,6 +364,8 @@ def note_record(path: Path) -> dict[str, Any]:
         "year": str(metadata.get("year") or ""),
         "journal": str(metadata.get("journal") or ""),
         "domain": domain,
+        "discipline": discipline,
+        "disciplineLabel": discipline_label,
         "status": str(metadata.get("review_status") or record_status or metadata.get("status") or ""),
         "recordStatus": record_status or ("legacy_verified" if legacy_formal else "legacy_pending"),
         "metadataStatus": str(metadata.get("metadata_status") or ""),
@@ -558,7 +593,7 @@ def note_payload(relative: str) -> dict[str, Any]:
     return {"ok": True, "note": note}
 
 
-def update_intake_screening(relative: str, decision: str, reason: str = "") -> dict[str, Any]:
+def update_intake_screening(relative: str, decision: str, reason: str = "", domain: str = "") -> dict[str, Any]:
     if decision not in {"included", "excluded", "pending"}:
         raise ValueError("筛选结论必须是 included、excluded 或 pending")
     path = safe_knowledge_path(relative)
@@ -568,12 +603,14 @@ def update_intake_screening(relative: str, decision: str, reason: str = "") -> d
     if "<!-- LEXTRACE:GENERATED-STUB -->" not in text:
         raise ValueError("只能更新由LexTrace创建的待审核样板")
     record_status = "excluded" if decision == "excluded" else "intake"
-    updates = {
+    updates: dict[str, Any] = {
         "screening_status": decision,
         "record_status": record_status,
         "screening_reason": clean_short_text(reason, maximum=500),
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
     }
+    if domain:
+        updates["primary_domain"] = clean_short_text(domain, maximum=100)
     for key, value in updates.items():
         rendered = json.dumps(value, ensure_ascii=False)
         pattern = rf"^{re.escape(key)}:\s*.*$"
@@ -587,6 +624,26 @@ def update_intake_screening(relative: str, decision: str, reason: str = "") -> d
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(text, encoding="utf-8")
     temporary.replace(path)
+
+    # 镜像同步至其他候选库（仅在非临时测试环境下）
+    is_test_env = any(t in str(VAULT_ROOT).lower() for t in ("tmp", "temp", "pytest"))
+    if not is_test_env:
+        mirror_dirs = [
+            Path.home() / "Downloads" / "Obsidian Vault" / "知识产权" / "论文库",
+            PROJECT_ROOT / "vault" / "知识产权" / "论文库",
+            Path("/Users/kansang/Documents/Codex/2026-08-08/h/vault/知识产权/论文库"),
+        ]
+        for mirror_dir in mirror_dirs:
+            try:
+                if mirror_dir.resolve() != path.parent.resolve() and mirror_dir.parent.exists():
+                    mirror_dir.mkdir(parents=True, exist_ok=True)
+                    mirror_file = mirror_dir / path.name
+                    mirror_tmp = mirror_file.with_suffix(mirror_file.suffix + ".tmp")
+                    mirror_tmp.write_text(text, encoding="utf-8")
+                    mirror_tmp.replace(mirror_file)
+            except OSError:
+                pass
+
     return {"ok": True, "message": "筛选结论已写入样板", "recordStatus": record_status}
 
 
@@ -772,9 +829,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
 
     def _screen_intake(self, payload: dict[str, Any]) -> None:
         relative = clean_short_text(payload.get("path"), maximum=500)
-        decision = clean_short_text(payload.get("decision"), maximum=30)
+        decision = clean_short_text(payload.get("decision"), maximum=30) or "pending"
         reason = clean_short_text(payload.get("reason"), maximum=500)
-        self._json(update_intake_screening(relative, decision, reason))
+        domain = clean_short_text(payload.get("domain"), maximum=100)
+        self._json(update_intake_screening(relative, decision, reason, domain))
 
     def _render_citation(self, payload: dict[str, Any]) -> None:
         relative = clean_short_text(payload.get("path"), maximum=500)

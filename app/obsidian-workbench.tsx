@@ -44,7 +44,25 @@ export type NoteRecord = {
   cnkiId: string;
   sourcePdf?: string;
   pdfLink?: string;
+  discipline?: "ip" | "other";
+  disciplineLabel?: string;
 };
+
+const IP_REGEX = /知识产权|专利|商标|著作权|版权|商业秘密|反不正当竞争|独创性|合理使用|优先权|作品|知产|NFT|WAPI|NPE|算法治理|数据法|数据权益|大模型|人工智能生成|地理标志|商业标识|域名|植物新品种|集成电路|开源|商业诋毁|信息网络传播权|标准必要专利|FRAND|网络侵权|避风港/i;
+const IP_JOURNALS = new Set(["知识产权", "版权理论与实务", "中国版权", "中华商标", "北大知识产权评论", "中国科技法律评论", "电子知识产权", "知识产权研究"]);
+
+export function detectNoteDiscipline(note: NoteRecord): "ip" | "other" {
+  if (note.discipline) return note.discipline;
+  if (note.domain) {
+    if (note.domain.includes("知识产权") || note.domain.includes("著作权") || note.domain.includes("专利") || note.domain.includes("商标") || note.domain.includes("竞争") || note.domain.includes("数据法")) {
+      return "ip";
+    }
+    return "other";
+  }
+  if (note.journal && IP_JOURNALS.has(note.journal)) return "ip";
+  const probe = `${note.title} ${note.journal} ${(note.topics || []).join(" ")} ${note.summary || ""}`;
+  return IP_REGEX.test(probe) ? "ip" : "other";
+}
 
 export type NoteDetail = NoteRecord & { backlinks: Array<{ path: string; title: string }>; localPath: string };
 
@@ -241,6 +259,13 @@ export default function ObsidianWorkbench({ initialData }: { initialData?: Navig
   const [querySaveName, setQuerySaveName] = useState("");
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
   const [screeningReasons, setScreeningReasons] = useState<Record<string, string>>({});
+
+  // Intake Discipline Filter, Sort & Pagination
+  const [intakeDisciplineFilter, setIntakeDisciplineFilter] = useState<"all" | "ip" | "other">("all");
+  const [intakeSort, setIntakeSort] = useState<"year-desc" | "year-asc" | "created-desc">("year-desc");
+  const [intakeYearFilter, setIntakeYearFilter] = useState<string>("all");
+  const [intakePage, setIntakePage] = useState(1);
+  const INTAKE_PAGE_SIZE = 15;
 
   // Citation Center
   const [citationPath, setCitationPath] = useState("");
@@ -659,6 +684,22 @@ ${materials}
     }
   }
 
+  async function setIntakeDomain(note: NoteRecord, domain: string) {
+    try {
+      const response = await fetch(`${BRIDGE}/api/intake/screening`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: note.path, decision: "pending", domain }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "更新学科分类失败");
+      setNotice(`已将《${note.title}》标记为「${domain}」。`);
+      await loadNavigation(true);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "无法更新学科分类");
+    }
+  }
+
   async function renderCitation() {
     if (!citationPath) {
       setNotice("请先选择一篇论文。");
@@ -991,7 +1032,45 @@ ${materials}
 
   // 3. CNKI Intake with Dual Mode & Saved Queries (Requirement 5 - Image 2 & 3 Fix)
   function renderIntake() {
-    const intakeNotes = navigation?.intake ?? [];
+    const allIntake = navigation?.intake ?? [];
+    const ipNotes = allIntake.filter((n) => (n.discipline || detectNoteDiscipline(n)) === "ip");
+    const otherNotes = allIntake.filter((n) => (n.discipline || detectNoteDiscipline(n)) === "other");
+
+    const availableYears = Array.from(
+      new Set(
+        allIntake
+          .map((n) => (n.year || "").match(/\b(19\d\d|20\d\d)\b/)?.[1])
+          .filter(Boolean) as string[]
+      )
+    ).sort((a, b) => Number(b) - Number(a));
+
+    let filtered = allIntake;
+    if (intakeDisciplineFilter !== "all") {
+      filtered = filtered.filter((n) => (n.discipline || detectNoteDiscipline(n)) === intakeDisciplineFilter);
+    }
+    if (intakeYearFilter !== "all") {
+      filtered = filtered.filter((n) => (n.year || "").includes(intakeYearFilter));
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
+      if (intakeSort === "year-desc") {
+        const yA = parseInt((a.year || "").match(/\b(19\d\d|20\d\d)\b/)?.[1] || "0", 10);
+        const yB = parseInt((b.year || "").match(/\b(19\d\d|20\d\d)\b/)?.[1] || "0", 10);
+        if (yB !== yA) return yB - yA;
+        return (b.modified || "").localeCompare(a.modified || "");
+      } else if (intakeSort === "year-asc") {
+        const yA = parseInt((a.year || "").match(/\b(19\d\d|20\d\d)\b/)?.[1] || "9999", 10);
+        const yB = parseInt((b.year || "").match(/\b(19\d\d|20\d\d)\b/)?.[1] || "9999", 10);
+        if (yA !== yB) return yA - yB;
+        return (b.modified || "").localeCompare(a.modified || "");
+      } else {
+        return (b.modified || "").localeCompare(a.modified || "");
+      }
+    });
+
+    const totalIntakePages = Math.max(1, Math.ceil(sorted.length / INTAKE_PAGE_SIZE));
+    const safeIntakePage = Math.min(intakePage, totalIntakePages);
+    const pagedIntake = sorted.slice((safeIntakePage - 1) * INTAKE_PAGE_SIZE, safeIntakePage * INTAKE_PAGE_SIZE);
 
     return (
       <section>
@@ -1220,7 +1299,9 @@ ${materials}
             >
               🔄 立即同步样板
             </button>
-            <span>{intakeNotes.length} 篇待处理样板</span>
+            <span>
+              {sorted.length} 篇待处理样板{sorted.length !== allIntake.length ? `（总计 ${allIntake.length} 篇）` : ""}
+            </span>
           </div>
         </div>
         <div style={{ marginBottom: 14, padding: "10px 14px", background: "var(--card-bg, #fff)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13, color: "var(--muted)", display: "flex", alignItems: "center", gap: 8 }}>
@@ -1229,43 +1310,182 @@ ${materials}
             <strong>原生 Markdown 存储</strong>：所有新抓取的文献均直接作为 Markdown 笔记（<code>.md</code>）写入 Obsidian <code>知识产权/论文库/</code>，绝不依赖中间 JSON 文件。无论通过爬虫采集、还是直接在 Obsidian 中新建修改，此处均实时扫描更新。
           </span>
         </div>
+
+        {/* Intake Discipline Filter & Sort Toolbar */}
+        <div className="intake-toolbar panel-card" style={{ padding: "14px 18px", marginBottom: 16, display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 14 }}>
+          {/* Discipline tabs */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)", marginRight: 4 }}>学科分类：</span>
+            <button
+              type="button"
+              className={`mode-toggle-btn ${intakeDisciplineFilter === "all" ? "active" : ""}`}
+              onClick={() => { setIntakeDisciplineFilter("all"); setIntakePage(1); }}
+              style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13 }}
+            >
+              全部样板 ({allIntake.length})
+            </button>
+            <button
+              type="button"
+              className={`mode-toggle-btn ${intakeDisciplineFilter === "ip" ? "active" : ""}`}
+              onClick={() => { setIntakeDisciplineFilter("ip"); setIntakePage(1); }}
+              style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13 }}
+            >
+              💡 知识产权法 ({ipNotes.length})
+            </button>
+            <button
+              type="button"
+              className={`mode-toggle-btn ${intakeDisciplineFilter === "other" ? "active" : ""}`}
+              onClick={() => { setIntakeDisciplineFilter("other"); setIntakePage(1); }}
+              style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13 }}
+            >
+              🏛️ 其他部门法 ({otherNotes.length})
+            </button>
+          </div>
+
+          {/* Sort & Year Filter Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 13, color: "var(--muted)" }}>年份：</span>
+              <select
+                value={intakeYearFilter}
+                onChange={(e) => { setIntakeYearFilter(e.target.value); setIntakePage(1); }}
+                style={{ padding: "6px 10px", borderRadius: 7, border: "1px solid var(--line)", fontSize: 13, background: "#fff", color: "var(--ink)" }}
+              >
+                <option value="all">全部发表年份</option>
+                {availableYears.map((yr) => (
+                  <option key={yr} value={yr}>{yr} 年</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 13, color: "var(--muted)" }}>排序：</span>
+              <select
+                value={intakeSort}
+                onChange={(e) => { setIntakeSort(e.target.value as any); setIntakePage(1); }}
+                style={{ padding: "6px 12px", borderRadius: 7, border: "1px solid var(--line)", fontSize: 13, background: "#fff", color: "var(--ink)", fontWeight: 500 }}
+              >
+                <option value="year-desc">📅 按发表年份（最新在前：2026 → 2013）</option>
+                <option value="year-asc">📅 按发表年份（由远及近：2013 → 2026）</option>
+                <option value="created-desc">⏱️ 按抓取与修改时间（最新在前）</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div className="intake-queue" style={{ display: "grid", gap: 12 }}>
-          {intakeNotes.map((note) => (
-            <article className="intake-card panel-card" key={note.path} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center" }}>
-              <div className="intake-card-main">
-                <span className={`status-badge ${note.metadataStatus === "ready" ? "verified" : "neutral"}`}>
-                  {note.metadataStatus === "ready" ? "元数据齐备" : "字段待补"}
-                </span>
-                <h3 style={{ margin: "8px 0 6px", fontSize: 17, fontFamily: "Georgia, Songti SC, serif" }}>{note.title}</h3>
-                <p style={{ color: "var(--muted)", fontSize: 13.5, margin: "0 0 6px", lineHeight: 1.65 }}>{note.summary || "已建立空白样板，等待摘要或全文结构化分析。"}</p>
-                <small style={{ color: "var(--muted-light)", fontSize: 12 }}>{note.authors.join("、") || "作者待补"} · {note.journal || "刊物待补"} · {note.year || "年份待补"}</small>
-              </div>
-              <div className="intake-review" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <input
-                  aria-label={`${note.title}筛选理由`}
-                  value={screeningReasons[note.path] || ""}
-                  onChange={(e) => setScreeningReasons((cur) => ({ ...cur, [note.path]: e.target.value }))}
-                  placeholder="填写纳入、排除或待定理由"
-                  style={{ padding: "6px 10px", fontSize: 12.5 }}
-                />
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button type="button" className="action-btn" style={{ background: "var(--teal-soft)", color: "var(--teal)" }} onClick={() => void screenIntake(note, "included")}>纳入</button>
-                  <button type="button" className="action-btn" onClick={() => void screenIntake(note, "pending")}>待定</button>
-                  <button type="button" className="action-btn" style={{ background: "var(--terracotta-soft)", color: "var(--terracotta)" }} onClick={() => void screenIntake(note, "excluded")}>排除</button>
+          {pagedIntake.map((note) => {
+            const disc = note.discipline || detectNoteDiscipline(note);
+            const isIp = disc === "ip";
+            return (
+              <article className="intake-card panel-card" key={note.path} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center" }}>
+                <div className="intake-card-main">
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                    <span className={`status-badge ${note.metadataStatus === "ready" ? "verified" : "neutral"}`}>
+                      {note.metadataStatus === "ready" ? "元数据齐备" : "字段待补"}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: "2px 8px",
+                        borderRadius: 4,
+                        background: isIp ? "rgba(15, 118, 110, 0.1)" : "rgba(180, 83, 9, 0.1)",
+                        color: isIp ? "var(--teal)" : "#b45309",
+                        border: isIp ? "1px solid rgba(15, 118, 110, 0.25)" : "1px solid rgba(180, 83, 9, 0.25)",
+                      }}
+                    >
+                      {isIp ? "💡 知识产权法" : "🏛️ 其他部门法"}
+                    </span>
+                    {note.year && (
+                      <span style={{ fontSize: 12, color: "var(--muted)", background: "rgba(0,0,0,0.04)", padding: "2px 6px", borderRadius: 4 }}>
+                        {note.year}年
+                      </span>
+                    )}
+                  </div>
+                  <h3 style={{ margin: "4px 0 6px", fontSize: 17, fontFamily: "Georgia, Songti SC, serif" }}>{note.title}</h3>
+                  <p style={{ color: "var(--muted)", fontSize: 13.5, margin: "0 0 6px", lineHeight: 1.65 }}>{note.summary || "已建立空白样板，等待摘要或全文结构化分析。"}</p>
+                  <small style={{ color: "var(--muted-light)", fontSize: 12 }}>{note.authors.join("、") || "作者待补"} · {note.journal || "刊物待补"} · {note.year ? `${note.year}年` : "年份待补"}</small>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button type="button" className="action-btn" onClick={() => toggleContext(note.path)}>
-                    {contextPaths.includes(note.path) ? "已加入Agent" : "+ Agent材料"}
-                  </button>
-                  <button type="button" className="action-btn" onClick={() => void openInObsidian(note.path)}>打开样板 ↗</button>
+                <div className="intake-review" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <input
+                    aria-label={`${note.title}筛选理由`}
+                    value={screeningReasons[note.path] || ""}
+                    onChange={(e) => setScreeningReasons((cur) => ({ ...cur, [note.path]: e.target.value }))}
+                    placeholder="填写纳入、排除或待定理由"
+                    style={{ padding: "6px 10px", fontSize: 12.5 }}
+                  />
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button type="button" className="action-btn" style={{ background: "var(--teal-soft)", color: "var(--teal)" }} onClick={() => void screenIntake(note, "included")}>纳入</button>
+                    <button type="button" className="action-btn" onClick={() => void screenIntake(note, "pending")}>待定</button>
+                    <button type="button" className="action-btn" style={{ background: "var(--terracotta-soft)", color: "var(--terracotta)" }} onClick={() => void screenIntake(note, "excluded")}>排除</button>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      type="button"
+                      className="action-btn"
+                      onClick={() => void setIntakeDomain(note, isIp ? "民商法/其他部门法" : "知识产权法")}
+                      title={isIp ? "点击将该样板移至其他部门法分类" : "点击将该样板移至知识产权法分类"}
+                      style={{ fontSize: 12 }}
+                    >
+                      {isIp ? "转为其他法 ⇄" : "转为知产法 ⇄"}
+                    </button>
+                    <button type="button" className="action-btn" onClick={() => toggleContext(note.path)}>
+                      {contextPaths.includes(note.path) ? "已加入Agent" : "+ Agent材料"}
+                    </button>
+                    <button type="button" className="action-btn" onClick={() => void openInObsidian(note.path)}>打开样板 ↗</button>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
-          {!intakeNotes.length && (
-            <div className="empty-state panel-card" style={{ padding: 36, textAlign: "center", color: "var(--muted)" }}>尚无新采集样板。启动爬虫后，样板会自动出现在这里。</div>
+              </article>
+            );
+          })}
+          {!sorted.length && (
+            <div className="empty-state panel-card" style={{ padding: 36, textAlign: "center", color: "var(--muted)" }}>当前筛选下暂无待处理样板。</div>
           )}
         </div>
+
+        {/* Pagination Controls: 15 per page */}
+        {sorted.length > INTAKE_PAGE_SIZE && (
+          <div className="pagination-bar">
+            <div className="pagination-info">
+              第 <span className="current-page-badge">{safeIntakePage}</span> / {totalIntakePages} 页 · 每页 {INTAKE_PAGE_SIZE} 篇（当前筛选共 {sorted.length} 篇）
+            </div>
+            <div className="pagination-controls">
+              <button
+                type="button"
+                disabled={safeIntakePage <= 1}
+                onClick={() => setIntakePage((p) => Math.max(1, p - 1))}
+              >
+                上一页
+              </button>
+              {Array.from({ length: Math.min(5, totalIntakePages) }, (_, i) => {
+                let pageNum = i + 1;
+                if (totalIntakePages > 5) {
+                  if (safeIntakePage <= 3) pageNum = i + 1;
+                  else if (safeIntakePage >= totalIntakePages - 2) pageNum = totalIntakePages - 4 + i;
+                  else pageNum = safeIntakePage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    className={safeIntakePage === pageNum ? "active-page" : ""}
+                    onClick={() => setIntakePage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                disabled={safeIntakePage >= totalIntakePages}
+                onClick={() => setIntakePage((p) => Math.min(totalIntakePages, p + 1))}
+              >
+                下一页
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     );
   }
