@@ -64,6 +64,8 @@ cnki_crawler/data/
 cnki_crawler/txt/
 cnki_crawler/metadata/
 cnki_crawler/page_index/
+vault/**/PDF/
+*.pdf
 
 # Environment files
 .env

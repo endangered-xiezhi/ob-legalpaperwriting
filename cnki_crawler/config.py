@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 # 当前独立爬虫根目录
@@ -79,34 +80,41 @@ USER_DATA_DIR = os.path.join(BASE_DIR, "cnki_chrome_data")
 EXTRACT_PAGINATED_TXT = True
 
 # ==============================================================================
-# 3. Obsidian 联动配置 (默认开启)
+# 3. Obsidian 联动与多层级归档配置 (默认开启)
 # ==============================================================================
 # 是否自动在 Obsidian 中创建待审核笔记样板（强制开启，Markdown 作为主存储）
 AUTO_CREATE_OBSIDIAN_STUB = True
 
-# Obsidian 仓库路径（智能探测：环境变量 -> 用户实际活跃 Downloads/Obsidian Vault -> 项目内置 vault）
+# 项目名称与采集批次（支持运行时交互自定义与命令行传入）
+PROJECT_NAME = "证券虚假陈述"
+BATCH_NAME = ""
+
+# Obsidian 仓库路径（智能探测：环境变量 -> 用户主 Obsidian Vault -> 项目内置 vault）
 def _detect_vault_root() -> str:
     env_v = os.environ.get("CNKI_OBSIDIAN_VAULT") or os.environ.get("LEXTRACE_OBSIDIAN_VAULT")
-    if env_v and os.path.exists(os.path.join(os.path.expanduser(env_v), "知识产权")):
-        try:
-            if any(os.scandir(os.path.join(os.path.expanduser(env_v), "知识产权"))):
-                return str(os.path.abspath(os.path.expanduser(env_v)))
-        except OSError:
-            pass
+    if env_v and os.path.exists(os.path.expanduser(env_v)):
+        return str(os.path.abspath(os.path.expanduser(env_v)))
     user_v = os.path.expanduser("~/Downloads/Obsidian Vault")
-    if os.path.exists(os.path.join(user_v, "知识产权")):
-        try:
-            if any(os.scandir(os.path.join(user_v, "知识产权"))):
-                return str(user_v)
-        except OSError:
-            pass
+    if os.path.exists(user_v):
+        return str(user_v)
     project_v = os.path.abspath(os.path.join(BASE_DIR, "..", "vault"))
-    if os.path.exists(os.path.join(project_v, "知识产权")):
-        return project_v
-    return str(user_v)
+    return project_v
 
 OBSIDIAN_VAULT_ROOT = _detect_vault_root()
-PAPER_STUB_DIR = os.path.join(OBSIDIAN_VAULT_ROOT, "知识产权", "论文库")
+
+def get_paper_stub_dir(year: str = "") -> str:
+    """按 [Obsidian根目录/11论文收集] / [项目名称] / [批次名称] / [年份] 获取输出路径"""
+    safe_proj = re.sub(r'[^\w\-\u4e00-\u9fa5]', '_', PROJECT_NAME).strip() or "证券虚假陈述"
+    safe_batch = re.sub(r'[^\w\-\u4e00-\u9fa5]', '_', BATCH_NAME).strip()
+    if not safe_batch:
+        from datetime import datetime
+        safe_batch = datetime.now().strftime("%Y%m%d_%H%M")
+    y_str = str(year).strip() if (year and str(year).strip() and str(year).strip() != "unknown") else "unsorted"
+    target_dir = os.path.join(OBSIDIAN_VAULT_ROOT, "11论文收集", safe_proj, safe_batch, y_str)
+    return target_dir
+
+# 默认基础样板目录
+PAPER_STUB_DIR = os.path.join(OBSIDIAN_VAULT_ROOT, "11论文收集", PROJECT_NAME)
 
 # ==============================================================================
 # 4. Chrome 浏览器与自动化配置

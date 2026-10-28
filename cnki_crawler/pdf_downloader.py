@@ -74,14 +74,17 @@ class CNKIPDFDownloader:
         self.main_window: str | None = None
         self._stop_requested = False
         self._is_terminating = False
+        self.log_filename = log_filename.name
         self.stats = {
             "success": 0,
             "stubs": 0,
             "metadata_only": 0,
             "skipped": 0,
             "failed": 0,
+            "duplicates": [],
             "start_time": time.time(),
         }
+        self.download_history: dict[str, dict] = {}
         self.downloaded_titles, self.downloaded_record_ids = self.load_download_history()
 
     def setup_signals(self) -> None:
@@ -136,23 +139,111 @@ class CNKIPDFDownloader:
             pass
 
     def load_download_history(self) -> tuple[set[str], set[str]]:
-        """读取本地已有 PDF 与元数据记录，用于增量去重。"""
+        """读取本地已有 PDF、元数据记录、历史日志及目标 Obsidian 知识库，用于增量精准去重与源头追溯。"""
         titles: set[str] = set()
         record_ids: set[str] = set()
+        self.download_history = {}
+
+        # 1. 扫描历史运行日志 (logs/*.log)
+        log_dir = Path(config.LOG_DIR)
+        if log_dir.exists():
+            for log_path in sorted(log_dir.glob("*.log")):
+                log_name = log_path.name
+                m_batch = re.search(r"cnki_spider_(\d{8}_\d{6})", log_name)
+                batch_str = m_batch.group(1) if m_batch else log_name
+                try:
+                    with log_path.open("r", encoding="utf-8", errors="ignore") as f:
+                        for line in f:
+                            m_art = re.search(r"正在采集：(.+)", line)
+                            if m_art:
+                                raw_t = m_art.group(1).strip()
+                                clean_t = re.sub(r"[^\w\u4e00-\u9fa5]", "", raw_t)
+                                if clean_t:
+                                    self.download_history[clean_t] = {
+                                        "title": raw_t,
+                                        "log_file": log_name,
+                                        "batch": batch_str,
+                                        "source": "历史采集日志",
+                                    }
+                                    titles.add(safe_filename(raw_t))
+                            m_pdf = re.search(r"归档残留临时 PDF：(.+?)(?:__[\w\-]+)?\.pdf", line)
+                            if m_pdf:
+                                raw_t = m_pdf.group(1).strip()
+                                clean_t = re.sub(r"[^\w\u4e00-\u9fa5]", "", raw_t)
+                                if clean_t and clean_t not in self.download_history:
+                                    self.download_history[clean_t] = {
+                                        "title": raw_t,
+                                        "log_file": log_name,
+                                        "batch": batch_str,
+                                        "source": "历史归档记录",
+                                    }
+                                    titles.add(safe_filename(raw_t))
+                except OSError:
+                    pass
+
+        # 2. 扫描已有的物理 PDF 文件
         for path in Path(config.DATA_ROOT).rglob("*.pdf"):
-            titles.add(re.sub(r"__[A-Za-z0-9_-]{6,}$", "", path.stem))
+            stem_clean = re.sub(r"__[A-Za-z0-9_-]{6,}$", "", path.stem)
+            titles.add(stem_clean)
+            c_key = re.sub(r"[^\w\u4e00-\u9fa5]", "", stem_clean)
+            if c_key and c_key not in self.download_history:
+                self.download_history[c_key] = {
+                    "title": stem_clean,
+                    "log_file": f"data/{path.parent.name}/{path.name}",
+                    "batch": path.parent.name,
+                    "source": "本地已存在PDF",
+                }
+
+        # 3. 扫描已有的结构化元数据 (metadata/*.json)
         for path in Path(config.METADATA_DIR).glob("*.json"):
             try:
                 item = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, ValueError, json.JSONDecodeError):
                 continue
-            pdf_path = Path(str(item.get("pdf_path") or "")).expanduser()
-            if pdf_path.exists():
-                if item.get("record_id"):
-                    record_ids.add(str(item["record_id"]))
-                if item.get("title"):
-                    titles.add(safe_filename(str(item["title"])))
-        logger.info("已读取历史记录：%s 个题名，%s 个稳定记录ID（已下载文献将自动跳过）。", len(titles), len(record_ids))
+            rec_id = str(item.get("record_id") or "")
+            item_title = str(item.get("title") or "")
+            clean_t = re.sub(r"[^\w\u4e00-\u9fa5]", "", item_title)
+            cap_time = str(item.get("captured_at") or "")
+            m_cap = re.search(r"(\d{4}-\d{2}-\d{2})", cap_time)
+            batch_date = m_cap.group(1) if m_cap else "已入库元数据"
+
+            info = {
+                "title": item_title,
+                "log_file": path.name,
+                "batch": batch_date,
+                "source": "已归档元数据",
+            }
+            if rec_id:
+                record_ids.add(rec_id)
+                self.download_history[rec_id] = info
+            if clean_t:
+                titles.add(safe_filename(item_title))
+                if clean_t not in self.download_history:
+                    self.download_history[clean_t] = info
+
+        # 4. 扫描目标 Obsidian 论文库 (/Users/kansang/Downloads/Obsidian Vault/11论文收集)
+        obs_11_dir = Path(config.OBSIDIAN_VAULT_ROOT) / "11论文收集"
+        if obs_11_dir.exists():
+            for root, dirs, files in os.walk(obs_11_dir):
+                for f in files:
+                    if f.endswith(".md"):
+                        stem = f[:-3]
+                        clean_t = re.sub(r"[^\w\u4e00-\u9fa5]", "", stem)
+                        rel_p = os.path.relpath(os.path.join(root, f), config.OBSIDIAN_VAULT_ROOT)
+                        if clean_t and clean_t not in self.download_history:
+                            self.download_history[clean_t] = {
+                                "title": stem,
+                                "log_file": rel_p,
+                                "batch": os.path.basename(os.path.dirname(root)),
+                                "source": "Obsidian 11论文收集",
+                            }
+                            titles.add(safe_filename(stem))
+
+        logger.info(
+            "已读取历史查重台账：%s 个题名，%s 个稳定记录ID（命中历史文献将自动精准追溯并跳过）。",
+            len(titles),
+            len(record_ids),
+        )
         return titles, record_ids
 
     def is_stop_requested(self) -> bool:
@@ -615,10 +706,23 @@ class CNKIPDFDownloader:
     def process_article(self, link_element, row_metadata: dict) -> None:
         assert self.driver is not None
         title = str(row_metadata.get("title") or link_element.text).strip()
+        clean_key = re.sub(r"[^\w\u4e00-\u9fa5]", "", title)
+
+        # 1. 列表层快速比对历史台账查重（无需点开详情页，秒级跳过）
+        if clean_key and clean_key in self.download_history:
+            dup = self.download_history[clean_key]
+            msg = f"⚠️ [重复跳过] 《{title}》已在【{dup['source']}】(日志/路径: {dup['log_file']}, 批次: {dup['batch']}) 中采集过，跳过下载与重复建卡。"
+            logger.info(msg)
+            print(f"\n{msg}")
+            self.stats["skipped"] += 1
+            self.stats["duplicates"].append({"title": title, **dup})
+            return
+
         logger.info("正在采集：%s", title)
         self.clear_downloads_dir()
         stub_path: Path | None = None
         metadata: dict = {}
+        stub_dir: Path | None = None
         try:
             self.open_detail(row_metadata, link_element)
             detail = self.extract_detail_metadata()
@@ -633,8 +737,24 @@ class CNKIPDFDownloader:
             metadata["capture_profile"] = getattr(config, "CAPTURE_PROFILE", {})
             metadata["captured_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
 
-            # 核心产物落地：立即在 Obsidian 知识库直接创建/更新 Markdown 卡片
-            stub_path, created = upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR))
+            # 2. 详情层根据稳定记录ID或正式标题二次精准查重
+            rec_id = str(metadata.get("record_id") or "")
+            clean_title = re.sub(r"[^\w\u4e00-\u9fa5]", "", str(metadata.get("title") or title))
+            if rec_id in self.download_history or (clean_title and clean_title in self.download_history):
+                dup = self.download_history.get(rec_id) or self.download_history.get(clean_title)
+                msg = f"⚠️ [重复跳过] 《{title}》(稳定ID: {rec_id}) 已在【{dup['source']}】(日志/路径: {dup['log_file']}, 批次: {dup['batch']}) 中采集过，跳过下载与重复建卡。"
+                logger.info(msg)
+                print(f"\n{msg}")
+                self.stats["skipped"] += 1
+                self.stats["duplicates"].append({"title": title, **dup})
+                return
+
+            # 核心产物落地：按 [项目/批次/年份] 写入 Obsidian 11论文收集
+            year = str(metadata.get("year") or "unsorted").strip()
+            if not re.match(r"^\d{4}$", year):
+                year = "unsorted"
+            stub_dir = Path(config.get_paper_stub_dir(year))
+            stub_path, created = upsert_obsidian_stub(metadata, stub_dir)
             metadata["obsidian_note_path"] = str(stub_path)
             if created:
                 self.stats["stubs"] += 1
@@ -642,20 +762,27 @@ class CNKIPDFDownloader:
             else:
                 logger.info("ℹ️ 已匹配现有 Obsidian 笔记，保留人工内容并更新元数据：%s", stub_path.name)
 
+            # 更新当前运行时历史台账，防止同批次后续检索项重复
+            curr_info = {
+                "title": title,
+                "log_file": self.log_filename,
+                "batch": getattr(config, "BATCH_NAME", "当前批次") or "当前批次",
+                "source": "本次当前批次",
+            }
+            if clean_title:
+                self.download_history[clean_title] = curr_info
+            if rec_id:
+                self.download_history[rec_id] = curr_info
+
             try:
                 write_manifest(metadata, Path(config.METADATA_DIR))
             except OSError:
                 pass
 
-            if metadata["record_id"] in self.downloaded_record_ids:
-                logger.info("⏭️ 该文献稳定ID已下载过，跳过下载：%s", metadata["record_id"])
-                self.stats["skipped"] += 1
-                return
-
             windows_before_download = set(self.driver.window_handles)
             if not self.click_pdf_download():
                 metadata["ingest_warning"] = "未找到PDF下载按钮"
-                upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR), stub_path)
+                upsert_obsidian_stub(metadata, stub_dir, stub_path)
                 try:
                     write_manifest(metadata, Path(config.METADATA_DIR))
                 except OSError:
@@ -744,7 +871,8 @@ class CNKIPDFDownloader:
                 metadata["pdf_path"] = str(pdf_path)
 
             # 直接回写实际 PDF/TXT 路径与最新状态至 Obsidian Markdown 笔记
-            stub_path, _ = upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR), stub_path)
+            target_dir = stub_dir or Path(config.get_paper_stub_dir())
+            stub_path, _ = upsert_obsidian_stub(metadata, target_dir, stub_path)
             try:
                 write_manifest(metadata, Path(config.METADATA_DIR))
             except OSError:
@@ -764,7 +892,8 @@ class CNKIPDFDownloader:
             if metadata:
                 metadata["ingest_warning"] = "用户手动中止采集" if is_interrupt else f"采集异常：{exc}"
                 try:
-                    upsert_obsidian_stub(metadata, Path(config.PAPER_STUB_DIR), stub_path)
+                    target_dir = stub_dir or Path(config.get_paper_stub_dir())
+                    upsert_obsidian_stub(metadata, target_dir, stub_path)
                 except Exception:
                     pass
                 try:
@@ -886,6 +1015,19 @@ class CNKIPDFDownloader:
         else:
             mode_desc = "🎯 期刊模式（CLSCI法学核心过滤）"
         status_banner = "🛑 知网文献采集已安全终止 (已完成全部数据对齐与归档)" if self._stop_requested else "🎉 知网文献采集整理完成"
+
+        dup_section = ""
+        if self.stats.get("duplicates"):
+            dup_lines = ["\n📋 历史重复文献对照明细 (已自动去重并精准溯源)："]
+            for idx, dup in enumerate(self.stats["duplicates"], 1):
+                dup_lines.append(
+                    f"  [{idx}] 《{dup['title']}》\n"
+                    f"      ↳ 重复来源: 【{dup['source']}】\n"
+                    f"      ↳ 历史日志/路径: {dup['log_file']} (批次: {dup['batch']})"
+                )
+            dup_section = "\n".join(dup_lines) + "\n"
+
+        target_obsidian_dir = getattr(config, "get_paper_stub_dir", lambda: config.PAPER_STUB_DIR)()
         summary = f"""
 ============================================================
               {status_banner}
@@ -896,9 +1038,9 @@ class CNKIPDFDownloader:
   已存在/跳过: {self.stats['skipped']} 篇
   仅保存元数据 (无PDF): {self.stats['metadata_only']} 篇
   Obsidian卡片创建: {self.stats['stubs']} 篇
-  失败: {self.stats['failed']} 篇
+  失败: {self.stats['failed']} 篇{dup_section}
 ------------------------------------------------------------
-  Obsidian 论文库: {config.PAPER_STUB_DIR}
+  Obsidian 论文库: {target_obsidian_dir}
   PDF 归档目录: {config.DATA_ROOT}
   分页 TXT 目录: {config.TXT_DIR}
   结构化元数据: {config.METADATA_DIR}

@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import os
 import re
 import sys
@@ -120,8 +121,23 @@ def interactive_menu() -> None:
         try:
             obs_input = input("\n👉 是否同步在本地 Obsidian 论文库中生成待审核笔记样板？[Y/n] (回车默认 Y，自动生成样板): ").strip().lower()
             config.AUTO_CREATE_OBSIDIAN_STUB = obs_input not in ("n", "no", "0")
-            if config.AUTO_CREATE_OBSIDIAN_STUB:
-                print(f"   已开启 Obsidian 联动，样板目录：{config.PAPER_STUB_DIR}")
+        except (KeyboardInterrupt, EOFError):
+            print("\n🛑 用户取消启动。")
+            sys.exit(0)
+
+    # 项目与批次分类归档配置
+    if config.AUTO_CREATE_OBSIDIAN_STUB:
+        print("\n📁 【分类归档设置 (Obsidian 11论文收集)】")
+        try:
+            default_proj = getattr(config, "PROJECT_NAME", "证券虚假陈述")
+            proj_input = input(f"👉 请输入项目名称 (回车默认: '{default_proj}'): ").strip()
+            config.PROJECT_NAME = proj_input if proj_input else default_proj
+
+            default_batch = datetime.now().strftime("%Y%m%d_%H%M")
+            batch_input = input(f"👉 请输入本次采集批次名称 (回车默认: '{default_batch}'): ").strip()
+            config.BATCH_NAME = batch_input if batch_input else default_batch
+            
+            print(f"   已设置归档层级：11论文收集/{config.PROJECT_NAME}/{config.BATCH_NAME}/[年份]/")
         except (KeyboardInterrupt, EOFError):
             print("\n🛑 用户取消启动。")
             sys.exit(0)
@@ -145,6 +161,16 @@ def parse_arguments() -> bool:
         "--author",
         dest="authors",
         help="指定作者姓名（用于作者模式核验，多个作者用逗号分隔，例如: '崔国斌,王迁'）",
+    )
+    parser.add_argument(
+        "--project",
+        default="证券虚假陈述",
+        help="归档项目名称（默认: '证券虚假陈述'）",
+    )
+    parser.add_argument(
+        "--batch",
+        default="",
+        help="采集批次名称（留空则默认按当前时间戳命名）",
     )
     parser.add_argument(
         "--no-filter",
@@ -172,6 +198,11 @@ def parse_arguments() -> bool:
     # 如果没有任何参数，则进入终端交互式菜单
     if len(sys.argv) == 1:
         return False
+
+    if args.project:
+        config.PROJECT_NAME = args.project
+    if args.batch:
+        config.BATCH_NAME = args.batch
 
     if args.no_filter or args.mode == "author":
         config.RUN_MODE = "author"
